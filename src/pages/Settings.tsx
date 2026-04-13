@@ -82,8 +82,10 @@ export default function Settings() {
     setIsDarkMode(newMode);
     if (newMode) {
       document.documentElement.classList.remove('light');
+      window.localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.add('light');
+      window.localStorage.setItem('theme', 'light');
     }
   };
 

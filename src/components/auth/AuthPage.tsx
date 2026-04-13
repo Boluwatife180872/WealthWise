@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,8 @@ export function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { signIn, signUp, signInWithMagicLink } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get('mode') === 'signup' ? 'signup' : 'signin';
 
   const handleSignIn = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,7 +30,7 @@ export function AuthPage() {
       toast.error(error.message);
     } else {
       toast.success('Welcome back!');
-      navigate('/');
+      navigate('/dashboard');
     }
     setIsLoading(false);
   };
@@ -42,13 +44,17 @@ export function AuthPage() {
     const password = formData.get('password') as string;
     const fullName = formData.get('fullName') as string;
 
-    const { error } = await signUp(email, password, fullName);
+    const { error, requiresEmailConfirmation } = await signUp(email, password, fullName);
     
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success('Account created! You can now sign in.');
-      navigate('/');
+      if (requiresEmailConfirmation) {
+        toast.success('Account created. Check your email to confirm your account before signing in.');
+      } else {
+        toast.success('Account created!');
+        navigate('/dashboard');
+      }
     }
     setIsLoading(false);
   };
@@ -84,7 +90,7 @@ export function AuthPage() {
         </CardHeader>
         
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs value={activeTab} onValueChange={(value) => setSearchParams({ mode: value })} className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
               <TabsTrigger value="signin">Sign In</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
