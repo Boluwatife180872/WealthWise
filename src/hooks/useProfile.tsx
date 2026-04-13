@@ -40,7 +40,7 @@ export function useProfile() {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['profile'] });
+      queryClient.invalidateQueries({ queryKey: ['profile', user?.id] });
       toast.success('Profile updated successfully');
     },
     onError: (error) => {

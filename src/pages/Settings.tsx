@@ -174,7 +174,7 @@ export default function Settings() {
           <CardContent className="space-y-6">
             {/* Avatar */}
             <div className="flex items-center gap-6">
-              <Avatar className="w-20 h-20">
+              <Avatar key={profile?.avatar_url || 'no-avatar'} className="w-20 h-20">
                 <AvatarImage src={profile?.avatar_url || undefined} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-xl">{initials}</AvatarFallback>
               </Avatar>
