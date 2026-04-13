@@ -22,6 +22,7 @@ function DashboardLayoutComponent({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, loading, signOut } = useAuth();
+  const { profile } = useProfile();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -38,8 +39,6 @@ function DashboardLayoutComponent({ children }: { children: ReactNode }) {
   }
 
   if (!user) return null;
-
-  const { profile } = useProfile();
 
   const handleSignOut = async () => {
     await signOut();
