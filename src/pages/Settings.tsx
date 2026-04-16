@@ -43,7 +43,7 @@ export default function Settings() {
     defaultValues: {
       full_name: '',
       monthly_income: 0,
-      currency: 'USD',
+      currency: 'NGN',
     },
   });
 

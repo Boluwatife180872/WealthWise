@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 export function StatsCards() {
   const { stats, isLoading } = useDashboardStats();
   const { profile } = useProfile();
-  const currency = profile?.currency || 'USD';
+  const currency = profile?.currency || 'NGN';
 
   if (isLoading) {
     return (

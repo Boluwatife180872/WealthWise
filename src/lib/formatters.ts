@@ -1,6 +1,6 @@
 import { CURRENCIES } from './constants';
 
-export function formatCurrency(amount: number, currencyCode: string = 'USD'): string {
+export function formatCurrency(amount: number, currencyCode: string = 'NGN'): string {
   const currency = CURRENCIES.find(c => c.code === currencyCode);
   const symbol = currency?.symbol || '$';
   
@@ -12,7 +12,7 @@ export function formatCurrency(amount: number, currencyCode: string = 'USD'): st
   return `${amount < 0 ? '-' : ''}${symbol}${formatted}`;
 }
 
-export function formatCompactCurrency(amount: number, currencyCode: string = 'USD'): string {
+export function formatCompactCurrency(amount: number, currencyCode: string = 'NGN'): string {
   const currency = CURRENCIES.find(c => c.code === currencyCode);
   const symbol = currency?.symbol || '$';
   

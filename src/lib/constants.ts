@@ -1,5 +1,6 @@
 export const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'NGN', symbol: '₦', name: 'Nigerian Naira' },
   { code: 'EUR', symbol: '€', name: 'Euro' },
   { code: 'GBP', symbol: '£', name: 'British Pound' },
   { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },

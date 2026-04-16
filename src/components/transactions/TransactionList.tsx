@@ -13,7 +13,7 @@ interface TransactionListProps {
 
 function TransactionListComponent({ transactions, isLoading }: TransactionListProps) {
   const { profile } = useProfile();
-  const currency = profile?.currency || 'USD';
+  const currency = profile?.currency || 'NGN';
 
   if (isLoading) {
     return (

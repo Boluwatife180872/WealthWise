@@ -93,7 +93,7 @@ function LandingPage() {
             <div>
               <p className="text-lg font-bold">WealthWise</p>
               <p className="text-sm text-muted-foreground">
-                Personal finance without the clutter
+                Financial freedom for Nigerians
               </p>
             </div>
           </div>
@@ -128,7 +128,7 @@ function LandingPage() {
             <div className="animate-fade-in space-y-8">
               <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-4 py-2 text-sm text-muted-foreground backdrop-blur-xl">
                 <Sparkles className="h-4 w-4 text-primary" />
-                Budget smarter. Spend with confidence.
+                Budget smarter. Spend with confidence in Naira.
               </div>
 
               <div className="space-y-5">
@@ -136,9 +136,9 @@ function LandingPage() {
                   Understand your money before it disappears.
                 </h1>
                 <p className="max-w-2xl text-lg leading-8 text-muted-foreground sm:text-xl">
-                  WealthWise helps you track transactions, manage budgets, plan
+                  WealthWise helps you track transactions in Naira, manage budgets, plan
                   savings goals, and read your financial health from one clear
-                  dashboard.
+                  dashboard designed for Nigerians.
                 </p>
               </div>
 
@@ -185,7 +185,7 @@ function LandingPage() {
                         <p className="text-sm text-muted-foreground">
                           Financial overview
                         </p>
-                        <h2 className="mt-1 text-2xl font-bold">$12,480.50</h2>
+                        <h2 className="mt-1 text-2xl font-bold">₦1,248,050.00</h2>
                       </div>
                       <div className="rounded-2xl bg-primary/15 p-3 text-primary">
                         <CreditCard className="h-5 w-5" />
@@ -195,18 +195,18 @@ function LandingPage() {
                       <div className="rounded-2xl bg-secondary/70 p-3">
                         <p className="text-muted-foreground">Income</p>
                         <p className="mt-1 font-semibold text-primary">
-                          +$6,200
+                          +₦620,000
                         </p>
                       </div>
                       <div className="rounded-2xl bg-secondary/70 p-3">
                         <p className="text-muted-foreground">Spent</p>
                         <p className="mt-1 font-semibold text-destructive">
-                          -$2,140
+                          -₦214,000
                         </p>
                       </div>
                       <div className="rounded-2xl bg-secondary/70 p-3">
                         <p className="text-muted-foreground">Saved</p>
-                        <p className="mt-1 font-semibold">$1,860</p>
+                        <p className="mt-1 font-semibold">₦186,000</p>
                       </div>
                     </div>
                   </div>
