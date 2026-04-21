@@ -39,7 +39,7 @@ const featureCards = [
 
 const trustPoints = [
   "Secure authentication",
-  "Light and dark theme support",
+  "Proper Financial Management",
   "Budgets, goals, recurring transactions, and analytics",
 ];
 
