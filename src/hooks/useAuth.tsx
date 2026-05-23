@@ -125,7 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const exchangeGoogleCredential = useCallback(async (credential: string): Promise<AuthResult> => {
     try {
-      const result = await convex.mutation(api.auth.exchangeGoogleCredential, { credential }) as { userId: string; sessionId: string };
+      const result = await convex.action(api.auth.exchangeGoogleCredential, { credential }) as { userId: string; sessionId: string };
       localStorage.setItem(SESSION_KEY, result.sessionId);
       setSessionId(result.sessionId);
       setUser({ id: result.userId, email: '' });
@@ -138,7 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const exchangeGitHubCode = useCallback(async (code: string): Promise<AuthResult> => {
     try {
-      const result = await convex.mutation(api.auth.exchangeGitHubCode, { code }) as { userId: string; sessionId: string };
+      const result = await convex.action(api.auth.exchangeGitHubCode, { code }) as { userId: string; sessionId: string };
       localStorage.setItem(SESSION_KEY, result.sessionId);
       setSessionId(result.sessionId);
       setUser({ id: result.userId, email: '' });
