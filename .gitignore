@@ -23,6 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Convex auto-generated files
-convex/_generated/
+# Convex auto-generated files (committed for Vercel deployment)
+# convex/_generated/
 .env.local

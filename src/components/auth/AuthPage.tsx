@@ -33,11 +33,14 @@ export function AuthPage() {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
-    const { error } = await signIn(email, password);
+    const { error, requiresEmailConfirmation } = await signIn(email, password);
 
     if (error) {
       toast.error(error.message);
       setIsLoading(false);
+    } else if (requiresEmailConfirmation) {
+      setShowVerification(true);
+      toast.success('Verification code sent to your email');
     } else {
       toast.success('Welcome back!');
       setAuthSuccess(true);

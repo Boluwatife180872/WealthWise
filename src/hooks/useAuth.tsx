@@ -150,23 +150,76 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (!signInLoaded) throw new Error('Sign in not loaded');
 
+      // Step 1: Create sign-in with identifier
       const result = await signIn.create({
         identifier: email,
+      });
+
+      // Step 2: Attempt password as first factor
+      const passwordResult = await signIn.prepareFirstFactor({
+        strategy: 'password',
         password,
       });
 
-      if (result.status !== 'complete') {
-        throw new Error('Sign in could not be completed');
+      if (passwordResult.status === 'complete') {
+        if (passwordResult.createdSessionId && setActive) {
+          await setActive({ session: passwordResult.createdSessionId });
+        }
+        return { error: null };
       }
 
-      if (result.createdSessionId && setActive) {
-        await setActive({ session: result.createdSessionId });
+      const needsSecondFactor = (passwordResult.supportedSecondFactors ?? []).length > 0;
+      if (needsSecondFactor) {
+        return { error: new Error('Two-factor authentication is required. Please contact support.') };
       }
 
-      return { error: null };
+      return { error: new Error(`Sign in incomplete (${passwordResult.status}). Please try again.`) };
     } catch (err: unknown) {
-      console.error('Sign in error:', err);
-      return { error: toAuthError(err) };
+      if (err instanceof Error && err.message === 'Sign in not loaded') {
+        return { error: err };
+      }
+
+      // If single-step create-with-password failed, try the full two-step flow
+      try {
+        if (!signInLoaded) throw new Error('Sign in not loaded');
+
+        const result = await signIn.create({
+          identifier: email,
+          password,
+        });
+
+        if (result.status === 'complete') {
+          if (result.createdSessionId && setActive) {
+            await setActive({ session: result.createdSessionId });
+          }
+          return { error: null };
+        }
+
+        const supported = result.supportedFirstFactors ?? [];
+        const needsMfa = (result.supportedSecondFactors ?? []).length > 0;
+        const needsEmailVerify = supported.some((f: { strategy: string }) => f.strategy === 'email_code');
+
+        if (needsEmailVerify) {
+          const emailFactor = supported.find((f: { strategy: string }) => f.strategy === 'email_code');
+          if (emailFactor?.emailAddressId) {
+            await signIn.prepareFirstFactor({
+              strategy: 'email_code',
+              emailAddressId: emailFactor.emailAddressId,
+            });
+            setPendingEmail(email);
+            return { error: null, requiresEmailConfirmation: true };
+          }
+        }
+
+        if (needsMfa) {
+          return { error: new Error('Two-factor authentication is required. Please contact support.') };
+        }
+
+        return { error: new Error(`Sign in incomplete (${result.status}). Please try again.`) };
+      } catch (fallbackErr: unknown) {
+        console.error('Sign in error:', fallbackErr);
+        return { error: toAuthError(fallbackErr) };
+      }
     }
   };
 
