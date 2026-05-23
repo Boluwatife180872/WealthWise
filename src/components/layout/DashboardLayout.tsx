@@ -46,7 +46,7 @@ function DashboardLayoutComponent({ children }: { children: ReactNode }) {
     navigate('/');
   };
 
-  const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || user?.email?.[0].toUpperCase() || 'U';
+  const initials = profile?.full_name?.split(' ').map(n => n[0]).join('').toUpperCase() || user?.email?.[0]?.toUpperCase() || 'U';
 
   return (
     <div className="min-h-screen bg-background">

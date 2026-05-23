@@ -201,15 +201,16 @@ function AuthForm() {
         <div className="grid grid-cols-2 gap-3">
           {GOOGLE_CLIENT_ID ? (
             <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                size="large"
-                width="100%"
-                shape="rectangular"
-                theme="filled_blue"
-                text={activeTab === 'signup' ? 'signup_with' : 'signin_with'}
-              />
+              <div className="w-full [&>div]:w-full [&>div>div]:w-full [&>div>div>iframe]:w-full">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  size="large"
+                  shape="rectangular"
+                  theme="filled_blue"
+                  text={activeTab === 'signup' ? 'signup_with' : 'signin_with'}
+                />
+              </div>
             </GoogleOAuthProvider>
           ) : (
             <Button variant="outline" disabled className="gap-2 cursor-not-allowed opacity-50">

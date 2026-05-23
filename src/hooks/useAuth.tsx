@@ -128,7 +128,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await convex.action(api.auth.exchangeGoogleCredential, { credential }) as { userId: string; sessionId: string };
       localStorage.setItem(SESSION_KEY, result.sessionId);
       setSessionId(result.sessionId);
-      setUser({ id: result.userId, email: '' });
       return { error: null };
     } catch (err: unknown) {
       console.error('Google sign-in error:', err);
@@ -141,7 +140,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await convex.action(api.auth.exchangeGitHubCode, { code }) as { userId: string; sessionId: string };
       localStorage.setItem(SESSION_KEY, result.sessionId);
       setSessionId(result.sessionId);
-      setUser({ id: result.userId, email: '' });
       return { error: null };
     } catch (err: unknown) {
       console.error('GitHub sign-in error:', err);
