@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useConvex } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { useAuth } from './useAuth';
 import { Category, TransactionType } from '@/types';
 import { toast } from 'sonner';
@@ -7,20 +8,25 @@ import { toast } from 'sonner';
 export function useCategories() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const convex = useConvex();
 
   const { data: categories = [], isLoading, error } = useQuery({
     queryKey: ['categories', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('categories')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('name');
-      
-      if (error) throw error;
-      return data as Category[];
+
+      const result = await convex.query(api.categories.list);
+
+      return (result as any[]).map((c: any) => ({
+        id: c._id,
+        user_id: c.userId,
+        name: c.name,
+        icon: c.icon || 'circle',
+        color: c.color || '#6366f1',
+        is_default: c.isDefault || false,
+        type: c.type || null,
+        created_at: new Date(c._creationTime).toISOString(),
+      })) as Category[];
     },
     enabled: !!user?.id,
   });
@@ -28,22 +34,22 @@ export function useCategories() {
   const addCategory = useMutation({
     mutationFn: async (category: { name: string; icon: string; color: string; type: TransactionType | null }) => {
       if (!user?.id) throw new Error('Not authenticated');
-      
-      const { data, error } = await supabase
-        .from('categories')
-        .insert({
-          ...category,
-          user_id: user.id,
-          is_default: false,
-        })
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+
+      const result = await convex.mutation(api.categories.create, {
+        name: category.name,
+        icon: category.icon,
+        color: category.color,
+        type: category.type,
+      });
+
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses-by-category'] });
+      queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
       toast.success('Category created');
     },
     onError: (error) => {
@@ -54,18 +60,22 @@ export function useCategories() {
 
   const updateCategory = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Category> & { id: string }) => {
-      const { data, error } = await supabase
-        .from('categories')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-      
-      if (error) throw error;
-      return data;
+      const result = await convex.mutation(api.categories.update, {
+        id: id as any,
+        name: updates.name,
+        icon: updates.icon,
+        color: updates.color,
+        type: updates.type ?? undefined,
+      });
+
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses-by-category'] });
+      queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
       toast.success('Category updated');
     },
     onError: (error) => {
@@ -76,15 +86,14 @@ export function useCategories() {
 
   const deleteCategory = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      await convex.mutation(api.categories.remove, { id: id as any });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses-by-category'] });
+      queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
       toast.success('Category deleted');
     },
     onError: (error) => {

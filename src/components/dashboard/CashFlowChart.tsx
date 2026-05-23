@@ -27,9 +27,11 @@ export function CashFlowChart() {
             <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" fontSize={12} />
             <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
             <Tooltip
-              contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+              contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px', color: 'hsl(var(--card-foreground))' }}
+              labelStyle={{ color: 'hsl(var(--card-foreground))' }}
+              itemStyle={{ color: 'hsl(var(--card-foreground))' }}
             />
-            <Legend />
+            <Legend wrapperStyle={{ color: 'hsl(var(--foreground))', fontSize: '13px' }} />
             <Bar dataKey="income" name="Income" fill="hsl(var(--income))" radius={[4, 4, 0, 0]} />
             <Bar dataKey="expenses" name="Expenses" fill="hsl(var(--expense))" radius={[4, 4, 0, 0]} />
           </BarChart>

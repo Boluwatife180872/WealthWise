@@ -155,7 +155,7 @@ function Recurring() {
     const isIncome = recurring.type === 'income';
 
     return (
-      <Card className={`glass-card border-l-4 ${isIncome ? 'border-l-income' : 'border-l-expense'}`}>
+      <Card className={`glass-card border-l-4 ${isIncome ? 'border-l-income' : 'border-l-expense'} cursor-pointer transition-colors duration-200 hover:bg-accent/5`}>
         <CardContent className="pt-4">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-3">

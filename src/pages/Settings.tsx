@@ -15,7 +15,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { User, DollarSign, Palette, Shield, Upload, Trash2, LogOut, Moon, Sun } from 'lucide-react';
 import { toast } from 'sonner';
 import { Navigate, useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { useConvex } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,14 +24,18 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 
 const profileSchema = z.object({
   full_name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
+});
+
+const financialSchema = z.object({
   monthly_income: z.coerce.number().min(0, 'Income must be positive'),
   currency: z.string().min(1, 'Currency is required'),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
+type FinancialFormValues = z.infer<typeof financialSchema>;
 
 export default function Settings() {
-  const { user, loading: authLoading, signOut } = useAuth();
+  const { user, loading: authLoading, signOut, deleteAccount } = useAuth();
   const { profile, isLoading: profileLoading, updateProfile, isUpdating } = useProfile();
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -38,24 +43,25 @@ export default function Settings() {
   const [isUploading, setIsUploading] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
 
-  const form = useForm<ProfileFormValues>({
+  const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      full_name: '',
-      monthly_income: 0,
-      currency: 'NGN',
-    },
+    defaultValues: { full_name: '' },
+  });
+
+  const financialForm = useForm<FinancialFormValues>({
+    resolver: zodResolver(financialSchema),
+    defaultValues: { monthly_income: 0, currency: 'NGN' },
   });
 
   useEffect(() => {
     if (profile) {
-      form.reset({
-        full_name: profile.full_name || '',
+      profileForm.reset({ full_name: profile.full_name || '' });
+      financialForm.reset({
         monthly_income: profile.monthly_income || 0,
         currency: profile.currency || 'USD',
       });
     }
-  }, [profile, form]);
+  }, [profile, profileForm, financialForm]);
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark') || 
@@ -89,6 +95,8 @@ export default function Settings() {
     }
   };
 
+  const convex = useConvex();
+
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -105,30 +113,41 @@ export default function Settings() {
 
     setIsUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `${user.id}/${fileName}`;
+      const uploadUrl = await convex.mutation(api.files.generateUploadUrl);
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
-        .upload(filePath, file, { upsert: true });
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': file.type },
+        body: file,
+      });
 
-      if (uploadError) throw uploadError;
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error');
+        throw new Error(`Upload failed (${response.status}): ${errorText}`);
+      }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
+      const { storageId } = await response.json();
+      if (!storageId) throw new Error('No storage ID returned from upload');
 
-      updateProfile({ avatar_url: publicUrl });
+      const url = await convex.mutation(api.files.saveAvatar, { storageId });
+
+      if (url) {
+        updateProfile({ avatar_url: url });
+        toast.success('Avatar updated');
+      }
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload avatar');
+      toast.error(error instanceof Error ? error.message : 'Failed to upload avatar');
     } finally {
       setIsUploading(false);
     }
   };
 
-  const onSubmit = (data: ProfileFormValues) => {
+  const onProfileSubmit = (data: ProfileFormValues) => {
+    updateProfile(data);
+  };
+
+  const onFinancialSubmit = (data: FinancialFormValues) => {
     updateProfile(data);
   };
 
@@ -143,14 +162,13 @@ export default function Settings() {
       return;
     }
 
-    try {
-      // Delete user data (RLS will handle the cascade)
-      await signOut();
+    const { error } = await deleteAccount();
+
+    if (error) {
+      toast.error(error.message);
+    } else {
       toast.success('Account deleted successfully');
       navigate('/auth');
-    } catch (error) {
-      console.error('Delete error:', error);
-      toast.error('Failed to delete account');
     }
   };
 
@@ -200,10 +218,10 @@ export default function Settings() {
             <Separator />
 
             {/* Profile Form */}
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <Form {...profileForm}>
+              <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
                 <FormField
-                  control={form.control}
+                  control={profileForm.control}
                   name="full_name"
                   render={({ field }) => (
                     <FormItem>
@@ -239,10 +257,10 @@ export default function Settings() {
             <CardDescription>Configure your income and currency preferences</CardDescription>
           </CardHeader>
           <CardContent>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <Form {...financialForm}>
+              <form onSubmit={financialForm.handleSubmit(onFinancialSubmit)} className="space-y-4">
                 <FormField
-                  control={form.control}
+                  control={financialForm.control}
                   name="monthly_income"
                   render={({ field }) => (
                     <FormItem>
@@ -256,7 +274,7 @@ export default function Settings() {
                 />
 
                 <FormField
-                  control={form.control}
+                  control={financialForm.control}
                   name="currency"
                   render={({ field }) => (
                     <FormItem>

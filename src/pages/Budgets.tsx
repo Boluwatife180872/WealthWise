@@ -257,19 +257,22 @@ export default function Budgets() {
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                    <XAxis type="number" tickFormatter={(v) => formatCurrency(v)} />
-                    <YAxis dataKey="name" type="category" width={100} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={true} vertical={false} />
+                    <XAxis type="number" tickFormatter={(v) => formatCurrency(v)} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis dataKey="name" type="category" width={100} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip 
                       formatter={(value: number) => formatCurrency(value)}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
                         border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
+                        borderRadius: '8px',
+                        color: 'hsl(var(--card-foreground))'
                       }}
+                      labelStyle={{ color: 'hsl(var(--card-foreground))' }}
+                      itemStyle={{ color: 'hsl(var(--card-foreground))' }}
                     />
-                    <Legend />
-                    <Bar dataKey="budget" name="Budget" fill="hsl(var(--muted))" radius={[0, 4, 4, 0]} />
+                    <Legend wrapperStyle={{ color: 'hsl(var(--foreground))', fontSize: '13px' }} />
+                    <Bar dataKey="budget" name="Budget" fill="hsl(var(--chart-2))" radius={[0, 4, 4, 0]} />
                     <Bar dataKey="spent" name="Spent" radius={[0, 4, 4, 0]}>
                       {chartData.map((entry, index) => (
                         <Cell 
@@ -309,7 +312,7 @@ export default function Budgets() {
                   const isNearLimit = progress > 80 && progress <= 100;
 
                   return (
-                    <div key={budget.id} className="p-4 rounded-xl bg-secondary/30 border border-border/40">
+                    <div key={budget.id} className="p-4 rounded-xl bg-secondary/50 border border-border/60 cursor-pointer transition-colors duration-200 hover:bg-accent/5">
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-3">
                           <div 

@@ -11,6 +11,11 @@ import {
   Sun,
   Target,
   Wallet,
+  Eye,
+  TrendingUp,
+  PiggyBank,
+  Smartphone,
+  Globe,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -254,6 +259,142 @@ function LandingPage() {
               </Card>
             </div>
           </section>
+
+          {/* How It Works */}
+          <section className="py-16 lg:py-24">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-4 py-2 text-sm text-muted-foreground backdrop-blur-xl mb-4">
+                <Eye className="h-4 w-4 text-primary" />
+                How it works
+              </div>
+              <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+                Get started in three steps
+              </h2>
+              <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
+                From sign-up to financial clarity, you are minutes away.
+              </p>
+            </div>
+
+            <div className="grid gap-6 md:grid-cols-3 max-w-4xl mx-auto">
+              {[
+                {
+                  step: "01",
+                  icon: Wallet,
+                  title: "Connect your accounts",
+                  desc: "Sign up securely and set your monthly income. WealthWise works with NGN and any currency you choose.",
+                },
+                {
+                  step: "02",
+                  icon: BarChart3,
+                  title: "Track every transaction",
+                  desc: "Log income and expenses, set budgets for each category, and create savings goals that keep you motivated.",
+                },
+                {
+                  step: "03",
+                  icon: TrendingUp,
+                  title: "Watch your money grow",
+                  desc: "Use real-time analytics and cash-flow projections to make smarter financial decisions every month.",
+                },
+              ].map(({ step, icon: Icon, title, desc }) => (
+                <Card key={step} className="glass-card text-center p-6 relative overflow-hidden">
+                  <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 shadow-glow">
+                    <Icon className="w-7 h-7 text-primary-foreground" />
+                  </div>
+                  <span className="text-xs font-bold text-primary tracking-widest">STEP {step}</span>
+                  <h3 className="text-xl font-bold mt-2">{title}</h3>
+                  <p className="text-sm text-muted-foreground mt-3 leading-relaxed">{desc}</p>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          {/* Benefits */}
+          <section className="py-16 lg:py-24 border-t border-border/40">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/60 bg-card/70 px-4 py-2 text-sm text-muted-foreground backdrop-blur-xl mb-4">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                Why WealthWise
+              </div>
+              <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl">
+                Built for Nigerians who mean business
+              </h2>
+              <p className="mt-3 text-lg text-muted-foreground max-w-xl mx-auto">
+                No clutter. No crypto. Just practical tools that work with how you actually spend.
+              </p>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2 max-w-4xl mx-auto">
+              {[
+                {
+                  icon: Globe,
+                  title: "Multi-currency support",
+                  desc: "Use NGN, USD, GBP, or any currency. WealthWise adapts to your preferred currency without conversion gymnastics.",
+                },
+                {
+                  icon: PiggyBank,
+                  title: "Budget management",
+                  desc: "Set monthly spending limits per category. Get alerts when you are nearing your limit to stay in control.",
+                },
+                {
+                  icon: Target,
+                  title: "Savings goals with forecasts",
+                  desc: "Define a target, track progress in real time, and see exactly when you will hit your goal based on your saving habits.",
+                },
+                {
+                  icon: Smartphone,
+                  title: "Works on any device",
+                  desc: "Responsive design that looks great on desktop, tablet, and phone. Your finances wherever you go.",
+                },
+              ].map(({ icon: Icon, title, desc }) => (
+                <Card key={title} className="glass-card p-5">
+                  <div className="flex gap-4">
+                    <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center shrink-0 shadow-glow">
+                      <Icon className="w-5 h-5 text-primary-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">{title}</h3>
+                      <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{desc}</p>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </section>
+
+          {/* CTA */}
+          <section className="py-16 lg:py-24">
+            <Card className="gradient-primary max-w-3xl mx-auto text-center p-8 lg:p-12 rounded-[2rem] border-0 shadow-glow">
+              <CardContent className="p-0 space-y-6">
+                <h2 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-primary-foreground">
+                  Ready to take control of your money?
+                </h2>
+                <p className="text-lg text-primary-foreground/80 max-w-lg mx-auto">
+                  Join WealthWise today and start making informed financial decisions in minutes.
+                </p>
+                <Button asChild size="lg" className="bg-white text-primary hover:bg-white/90 shadow-lg text-base px-8">
+                  <Link to="/auth?mode=signup">
+                    Create your free account
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </section>
+
+          {/* Footer */}
+          <footer className="pt-8 pb-4 border-t border-border/40">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl gradient-primary shadow-glow">
+                  <Wallet className="h-4 w-4 text-primary-foreground" />
+                </div>
+                <p className="text-sm font-bold">WealthWise</p>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Built for financial freedom. Not financial advice.
+              </p>
+            </div>
+          </footer>
         </main>
       </div>
     </div>

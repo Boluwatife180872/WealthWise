@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useConvex } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { useAuth } from './useAuth';
 import { Transaction, TransactionType } from '@/types';
 import { toast } from 'sonner';
-import { startOfMonth, endOfMonth, format } from 'date-fns';
+import { startOfMonth, endOfMonth } from 'date-fns';
 
 interface TransactionFilters {
   startDate?: Date;
@@ -14,47 +15,49 @@ interface TransactionFilters {
   maxAmount?: number;
 }
 
+function mapTransaction(t: any): Transaction {
+  return {
+    id: t._id,
+    user_id: t.userId,
+    amount: t.amount,
+    type: t.type,
+    category_id: t.categoryId ?? null,
+    notes: t.notes ?? null,
+    date: new Date(t.date).toISOString(),
+    created_at: new Date(t._creationTime).toISOString(),
+    category: t.category ? {
+      id: t.category._id,
+      user_id: t.category.userId,
+      name: t.category.name,
+      icon: t.category.icon,
+      color: t.category.color,
+      is_default: t.category.isDefault || false,
+      type: t.category.type || null,
+      created_at: new Date(t.category._creationTime).toISOString(),
+    } : undefined
+  };
+}
+
 export function useTransactions(filters?: TransactionFilters) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const convex = useConvex();
 
   const { data: transactions = [], isLoading, error } = useQuery({
     queryKey: ['transactions', user?.id, filters],
     queryFn: async () => {
       if (!user?.id) return [];
-      
-      let query = supabase
-        .from('transactions')
-        .select(`
-          *,
-          category:categories(*)
-        `)
-        .eq('user_id', user.id)
-        .order('date', { ascending: false });
-      
-      if (filters?.startDate) {
-        query = query.gte('date', format(filters.startDate, 'yyyy-MM-dd'));
-      }
-      if (filters?.endDate) {
-        query = query.lte('date', format(filters.endDate, 'yyyy-MM-dd'));
-      }
-      if (filters?.type) {
-        query = query.eq('type', filters.type);
-      }
-      if (filters?.categoryId) {
-        query = query.eq('category_id', filters.categoryId);
-      }
-      if (filters?.minAmount !== undefined) {
-        query = query.gte('amount', filters.minAmount);
-      }
-      if (filters?.maxAmount !== undefined) {
-        query = query.lte('amount', filters.maxAmount);
-      }
-      
-      const { data, error } = await query;
-      
-      if (error) throw error;
-      return data as Transaction[];
+
+      const result = await convex.query(api.transactions.list, {
+        startDate: filters?.startDate?.getTime(),
+        endDate: filters?.endDate?.getTime(),
+        type: filters?.type,
+        categoryId: filters?.categoryId,
+        minAmount: filters?.minAmount,
+        maxAmount: filters?.maxAmount,
+      });
+
+      return (result as any[]).map(mapTransaction);
     },
     enabled: !!user?.id,
   });
@@ -68,26 +71,22 @@ export function useTransactions(filters?: TransactionFilters) {
       date?: string;
     }) => {
       if (!user?.id) throw new Error('Not authenticated');
-      
-      const { data, error } = await supabase
-        .from('transactions')
-        .insert({
-          ...transaction,
-          user_id: user.id,
-          date: transaction.date || new Date().toISOString(),
-        })
-        .select(`
-          *,
-          category:categories(*)
-        `)
-        .single();
-      
-      if (error) throw error;
-      return data;
+
+      const result = await convex.mutation(api.transactions.create, {
+        amount: transaction.amount,
+        type: transaction.type,
+        categoryId: transaction.category_id as any,
+        notes: transaction.notes,
+        date: transaction.date ? new Date(transaction.date).getTime() : Date.now(),
+      });
+
+      return mapTransaction(result);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses-by-category'] });
+      queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
       toast.success('Transaction added');
     },
     onError: (error) => {
@@ -98,22 +97,22 @@ export function useTransactions(filters?: TransactionFilters) {
 
   const updateTransaction = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Transaction> & { id: string }) => {
-      const { data, error } = await supabase
-        .from('transactions')
-        .update(updates)
-        .eq('id', id)
-        .select(`
-          *,
-          category:categories(*)
-        `)
-        .single();
-      
-      if (error) throw error;
-      return data;
+      const result = await convex.mutation(api.transactions.update, {
+        id: id as any,
+        amount: updates.amount,
+        type: updates.type,
+        categoryId: updates.category_id as any,
+        notes: updates.notes,
+        date: updates.date ? new Date(updates.date).getTime() : undefined,
+      });
+
+      return mapTransaction(result);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses-by-category'] });
+      queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
       toast.success('Transaction updated');
     },
     onError: (error) => {
@@ -124,16 +123,13 @@ export function useTransactions(filters?: TransactionFilters) {
 
   const deleteTransaction = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      await convex.mutation(api.transactions.remove, { id: id as any });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['expenses-by-category'] });
+      queryClient.invalidateQueries({ queryKey: ['cash-flow'] });
       toast.success('Transaction deleted');
     },
     onError: (error) => {
@@ -159,10 +155,10 @@ export function useMonthlyTransactions(month?: number, year?: number) {
   const now = new Date();
   const targetMonth = month ?? now.getMonth() + 1;
   const targetYear = year ?? now.getFullYear();
-  
+
   const startDate = new Date(targetYear, targetMonth - 1, 1);
   const endDate = endOfMonth(startDate);
-  
+
   return useTransactions({
     startDate,
     endDate,

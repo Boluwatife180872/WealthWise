@@ -1,12 +1,37 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useConvex } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { useAuth } from './useAuth';
 import { Budget } from '@/types';
 import { toast } from 'sonner';
 
+function mapBudget(b: any): Budget {
+  return {
+    id: b._id,
+    user_id: b.userId,
+    category_id: b.categoryId,
+    amount: b.amount,
+    month: b.month,
+    year: b.year,
+    created_at: new Date(b._creationTime).toISOString(),
+    category: b.category ? {
+      id: b.category._id,
+      user_id: b.category.userId,
+      name: b.category.name,
+      icon: b.category.icon || 'circle',
+      color: b.category.color || '#6366f1',
+      is_default: b.category.isDefault || false,
+      type: b.category.type || null,
+      created_at: new Date(b.category._creationTime).toISOString(),
+    } : undefined,
+    spent: 0,
+  };
+}
+
 export function useBudgets(month?: number, year?: number) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const convex = useConvex();
   const now = new Date();
   const targetMonth = month ?? now.getMonth() + 1;
   const targetYear = year ?? now.getFullYear();
@@ -15,19 +40,13 @@ export function useBudgets(month?: number, year?: number) {
     queryKey: ['budgets', user?.id, targetMonth, targetYear],
     queryFn: async () => {
       if (!user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('budgets')
-        .select(`
-          *,
-          category:categories(*)
-        `)
-        .eq('user_id', user.id)
-        .eq('month', targetMonth)
-        .eq('year', targetYear);
-      
-      if (error) throw error;
-      return data as Budget[];
+
+      const result = await convex.query(api.budgets.list, {
+        month: targetMonth,
+        year: targetYear,
+      });
+
+      return (result as any[]).map(mapBudget);
     },
     enabled: !!user?.id,
   });
@@ -35,28 +54,23 @@ export function useBudgets(month?: number, year?: number) {
   const addBudget = useMutation({
     mutationFn: async (budget: { category_id: string; amount: number; month: number; year: number }) => {
       if (!user?.id) throw new Error('Not authenticated');
-      
-      const { data, error } = await supabase
-        .from('budgets')
-        .insert({
-          ...budget,
-          user_id: user.id,
-        })
-        .select(`
-          *,
-          category:categories(*)
-        `)
-        .single();
-      
-      if (error) throw error;
-      return data;
+
+      const result = await convex.mutation(api.budgets.create, {
+        categoryId: budget.category_id as any,
+        amount: budget.amount,
+        month: budget.month,
+        year: budget.year,
+      });
+
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       toast.success('Budget created');
     },
     onError: (error: any) => {
-      if (error.code === '23505') {
+      if (error.message?.includes('already exists')) {
         toast.error('Budget already exists for this category');
       } else {
         toast.error('Failed to create budget');
@@ -67,21 +81,16 @@ export function useBudgets(month?: number, year?: number) {
 
   const updateBudget = useMutation({
     mutationFn: async ({ id, amount }: { id: string; amount: number }) => {
-      const { data, error } = await supabase
-        .from('budgets')
-        .update({ amount })
-        .eq('id', id)
-        .select(`
-          *,
-          category:categories(*)
-        `)
-        .single();
-      
-      if (error) throw error;
-      return data;
+      const result = await convex.mutation(api.budgets.update, {
+        id: id as any,
+        amount,
+      });
+
+      return result;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       toast.success('Budget updated');
     },
     onError: (error) => {
@@ -92,15 +101,11 @@ export function useBudgets(month?: number, year?: number) {
 
   const deleteBudget = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('budgets')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      await convex.mutation(api.budgets.remove, { id: id as any });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
       toast.success('Budget deleted');
     },
     onError: (error) => {

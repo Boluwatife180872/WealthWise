@@ -233,18 +233,21 @@ export default function Analytics() {
                         <stop offset="95%" stopColor={chartColors.expense} stopOpacity={0}/>
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="shortMonth" />
-                    <YAxis tickFormatter={(v) => formatCurrency(v)} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis dataKey="shortMonth" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis tickFormatter={(v) => formatCurrency(v)} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip 
                       formatter={(value: number) => formatCurrency(value)}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
                         border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
+                        borderRadius: '8px',
+                        color: 'hsl(var(--card-foreground))'
                       }}
+                      labelStyle={{ color: 'hsl(var(--card-foreground))' }}
+                      itemStyle={{ color: 'hsl(var(--card-foreground))' }}
                     />
-                    <Legend />
+                    <Legend wrapperStyle={{ color: 'hsl(var(--foreground))', fontSize: '13px' }} />
                     <Area 
                       type="monotone" 
                       dataKey="income" 
@@ -281,18 +284,21 @@ export default function Analytics() {
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={cashFlowData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="shortMonth" />
-                    <YAxis tickFormatter={(v) => formatCurrency(v)} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis dataKey="shortMonth" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis tickFormatter={(v) => formatCurrency(v)} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip 
                       formatter={(value: number) => formatCurrency(value)}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
                         border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
+                        borderRadius: '8px',
+                        color: 'hsl(var(--card-foreground))'
                       }}
+                      labelStyle={{ color: 'hsl(var(--card-foreground))' }}
+                      itemStyle={{ color: 'hsl(var(--card-foreground))' }}
                     />
-                    <Legend />
+                    <Legend wrapperStyle={{ color: 'hsl(var(--foreground))', fontSize: '13px' }} />
                     <Bar dataKey="income" name="Income" fill={chartColors.income} radius={[4, 4, 0, 0]} />
                     <Bar dataKey="expenses" name="Expenses" fill={chartColors.expense} radius={[4, 4, 0, 0]} />
                   </BarChart>
@@ -310,16 +316,19 @@ export default function Analytics() {
               <div className="h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={cashFlowData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="shortMonth" />
-                    <YAxis tickFormatter={(v) => `${v.toFixed(0)}%`} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                    <XAxis dataKey="shortMonth" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis tickFormatter={(v) => `${v.toFixed(0)}%`} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip 
                       formatter={(value: number) => `${value.toFixed(1)}%`}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
                         border: '1px solid hsl(var(--border))',
-                        borderRadius: '8px'
+                        borderRadius: '8px',
+                        color: 'hsl(var(--card-foreground))'
                       }}
+                      labelStyle={{ color: 'hsl(var(--card-foreground))' }}
+                      itemStyle={{ color: 'hsl(var(--card-foreground))' }}
                     />
                     <Line 
                       type="monotone" 
@@ -363,7 +372,7 @@ export default function Analytics() {
                           <p className="text-xs text-muted-foreground">{formatPercent(percentage / 100)}</p>
                         </div>
                       </div>
-                      <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                      <div className="h-2 bg-secondary/50 border border-border/30 rounded-full overflow-hidden">
                         <div 
                           className="h-full rounded-full transition-all duration-500"
                           style={{ 
@@ -390,21 +399,21 @@ export default function Analytics() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-4 rounded-xl bg-secondary/30">
+              <div className="p-4 rounded-xl bg-secondary/50 border border-border/40 transition-colors duration-200 hover:bg-accent/5">
                 <p className="text-sm text-muted-foreground mb-1">Projected Next Month Income</p>
                 <p className="text-xl font-bold tabular-nums text-income">{formatCurrency(Math.max(0, projectedIncome))}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {incomeTrend >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(incomeTrend))}/month trend
                 </p>
               </div>
-              <div className="p-4 rounded-xl bg-secondary/30">
+              <div className="p-4 rounded-xl bg-secondary/50 border border-border/40">
                 <p className="text-sm text-muted-foreground mb-1">Projected Next Month Expenses</p>
                 <p className="text-xl font-bold tabular-nums text-expense">{formatCurrency(Math.max(0, projectedExpenses))}</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {expenseTrend >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(expenseTrend))}/month trend
                 </p>
               </div>
-              <div className="p-4 rounded-xl bg-secondary/30">
+              <div className="p-4 rounded-xl bg-secondary/50 border border-border/40">
                 <p className="text-sm text-muted-foreground mb-1">Projected Net Savings</p>
                 <p className={`text-xl font-bold tabular-nums ${projectedIncome - projectedExpenses >= 0 ? 'text-income' : 'text-expense'}`}>
                   {formatCurrency(projectedIncome - projectedExpenses)}

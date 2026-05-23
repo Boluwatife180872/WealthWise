@@ -1,6 +1,8 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import { useState, useEffect, useRef, createContext, useContext, ReactNode } from 'react';
+import { useAuth as useClerkAuth, useSignIn, useSignUp, useUser } from '@clerk/clerk-react';
+import { useConvex } from 'convex/react';
+import { useQueryClient } from '@tanstack/react-query';
+import { api } from '../../convex/_generated/api';
 
 type AuthResult = {
   error: Error | null;
@@ -8,8 +10,8 @@ type AuthResult = {
 };
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: { id: string; email: string | undefined } | null;
+  session: unknown;
   loading: boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<AuthResult>;
   signIn: (email: string, password: string) => Promise<AuthResult>;
@@ -19,96 +21,148 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<AuthResult>;
   updatePassword: (password: string) => Promise<AuthResult>;
+  verifyEmail: (code: string) => Promise<AuthResult>;
+  deleteAccount: () => Promise<AuthResult>;
+  pendingEmail: string | null;
+  initializationError: Error | null;
+  retryInitialization: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const getAuthRedirectUrl = (path = '/dashboard') => {
-  const configuredBaseUrl = import.meta.env.VITE_SUPABASE_AUTH_REDIRECT_URL?.trim();
-
-  if (!configuredBaseUrl) {
-    return undefined;
-  }
-
-  return new URL(path, configuredBaseUrl).toString();
-};
-
 const toAuthError = (error: unknown) => {
-  if (error instanceof Error) {
-    if (error.message === 'Failed to fetch') {
-      return new Error('Network error: Could not connect to Supabase. Check your internet connection, ad-blocker, or Supabase project URL.');
-    }
-
-    if (error.message.toLowerCase().includes('redirect')) {
-      return new Error('Supabase rejected the authentication redirect URL. Add your app URL to the Supabase Auth URL allow list or set VITE_SUPABASE_AUTH_REDIRECT_URL.');
-    }
-
-    return error;
-  }
-
+  if (error instanceof Error) return error;
   return new Error('Authentication failed. Please try again.');
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const { isSignedIn, isLoaded, signOut: clerkSignOut } = useClerkAuth();
+  const { user: clerkUser, isLoaded: userLoaded } = useUser();
+  const { isLoaded: signInLoaded, signIn, setActive } = useSignIn();
+  const { isLoaded: signUpLoaded, signUp } = useSignUp();
+  const convex = useConvex();
+  const queryClient = useQueryClient();
+
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
+  const [initializationError, setInitializationError] = useState<Error | null>(null);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const initializingRef = useRef(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+    if (isLoaded && userLoaded) {
+      if (!isSignedIn || !clerkUser) {
         setLoading(false);
+        return;
       }
-    );
+      if (initialized) {
+        setLoading(false);
+        return;
+      }
+    }
+  }, [isLoaded, userLoaded, isSignedIn, clerkUser, initialized]);
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+  useEffect(() => {
+    if (isSignedIn && !initialized && !initializingRef.current && clerkUser && isLoaded && userLoaded) {
+      initializingRef.current = true;
+      (async () => {
+        const fullName = `${clerkUser.firstName ?? ""} ${clerkUser.lastName ?? ""}`.trim();
+        try {
+          await convex.mutation(api.users.initializeNewUser, { fullName: fullName || undefined });
+          const uid = clerkUser.id;
+          queryClient.invalidateQueries({ queryKey: ['profile', uid] });
+          queryClient.invalidateQueries({ queryKey: ['categories', uid] });
+          setInitialized(true);
+        } catch (err) {
+          console.error('Failed to initialize new user:', err);
+          setInitializationError(err as Error);
+          initializingRef.current = false;
+        } finally {
+          setLoading(false);
+        }
+      })();
+    }
+  }, [isSignedIn, initialized, clerkUser, isLoaded, userLoaded, convex, queryClient]);
 
-    return () => subscription.unsubscribe();
-  }, []);
+  const user = clerkUser
+    ? { id: clerkUser.id, email: clerkUser.emailAddresses?.[0]?.emailAddress }
+    : null;
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUpFn = async (email: string, password: string, fullName?: string) => {
     try {
-      const emailRedirectTo = getAuthRedirectUrl();
-      const { data, error } = await supabase.auth.signUp({
-        email,
+      if (!signUpLoaded) throw new Error('Sign up not loaded');
+
+      const result = await signUp.create({
+        emailAddress: email,
         password,
-        options: {
-          ...(emailRedirectTo ? { emailRedirectTo } : {}),
-          data: { full_name: fullName },
-        },
       });
-      
-      if (error) {
-        return { error: toAuthError(error) };
+
+      if (fullName) {
+        try {
+          await signUp.update({
+            firstName: fullName.split(' ')[0],
+            lastName: fullName.split(' ').slice(1).join(' ') || undefined,
+          });
+        } catch {
+          // Name update is optional
+        }
       }
-      
-      return {
-        error: null,
-        requiresEmailConfirmation: !data.session,
-      };
+
+      if (result.status === 'missing_requirements') {
+        await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
+        setPendingEmail(email);
+        return { error: null, requiresEmailConfirmation: true };
+      }
+
+      if (result.createdSessionId && setActive) {
+        await setActive({ session: result.createdSessionId });
+      }
+
+      return { error: null };
     } catch (err: unknown) {
       console.error('Sign up error:', err);
       return { error: toAuthError(err) };
     }
   };
 
-  const signIn = async (email: string, password: string) => {
+  const verifyEmail = async (code: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
+      if (!signUpLoaded) throw new Error('Sign up not loaded');
+
+      const result = await signUp.attemptEmailAddressVerification({ code });
+
+      if (result.status === 'complete') {
+        setPendingEmail(null);
+        if (result.createdSessionId && setActive) {
+          await setActive({ session: result.createdSessionId });
+        }
+        return { error: null };
+      }
+
+      throw new Error('Verification failed. Please try again.');
+    } catch (err: unknown) {
+      console.error('Verification error:', err);
+      return { error: toAuthError(err) };
+    }
+  };
+
+  const signInFn = async (email: string, password: string) => {
+    try {
+      if (!signInLoaded) throw new Error('Sign in not loaded');
+
+      const result = await signIn.create({
+        identifier: email,
         password,
       });
-      
-      if (error) {
-        return { error: toAuthError(error) };
+
+      if (result.status !== 'complete') {
+        throw new Error('Sign in could not be completed');
       }
-      
+
+      if (result.createdSessionId && setActive) {
+        await setActive({ session: result.createdSessionId });
+      }
+
       return { error: null };
     } catch (err: unknown) {
       console.error('Sign in error:', err);
@@ -118,13 +172,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     try {
-      const redirectTo = getAuthRedirectUrl();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: redirectTo ? { redirectTo } : undefined,
+      if (!signInLoaded) throw new Error('Sign in not loaded');
+
+      await signIn.authenticateWithRedirect({
+        strategy: 'oauth_google',
+        redirectUrl: window.location.origin + '/dashboard',
+        redirectUrlComplete: window.location.origin + '/dashboard',
       });
 
-      return { error: error ? toAuthError(error) : null };
+      return { error: null };
     } catch (err: unknown) {
       return { error: toAuthError(err) };
     }
@@ -132,13 +188,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGithub = async () => {
     try {
-      const redirectTo = getAuthRedirectUrl();
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: redirectTo ? { redirectTo } : undefined,
+      if (!signInLoaded) throw new Error('Sign in not loaded');
+
+      await signIn.authenticateWithRedirect({
+        strategy: 'oauth_github',
+        redirectUrl: window.location.origin + '/dashboard',
+        redirectUrlComplete: window.location.origin + '/dashboard',
       });
 
-      return { error: error ? toAuthError(error) : null };
+      return { error: null };
     } catch (err: unknown) {
       return { error: toAuthError(err) };
     }
@@ -146,32 +204,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithMagicLink = async (email: string) => {
     try {
-      const emailRedirectTo = getAuthRedirectUrl();
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: emailRedirectTo ? { emailRedirectTo } : undefined,
+      if (!signInLoaded) throw new Error('Sign in not loaded');
+
+      await signIn.create({
+        identifier: email,
+        strategy: 'email_link',
+        redirectUrl: window.location.origin + '/dashboard',
       });
 
-      return { error: error ? toAuthError(error) : null };
+      return { error: null };
     } catch (err: unknown) {
       return { error: toAuthError(err) };
     }
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    setUser(null);
-    setSession(null);
+  const signOutFn = async () => {
+    await clerkSignOut();
   };
 
   const resetPassword = async (email: string) => {
     try {
-      const redirectTo = getAuthRedirectUrl('/auth/reset-password');
-      const { error } = await supabase.auth.resetPasswordForEmail(email, redirectTo ? {
-        redirectTo,
-      } : undefined);
+      if (!signInLoaded) throw new Error('Sign in not loaded');
 
-      return { error: error ? toAuthError(error) : null };
+      await signIn.create({
+        identifier: email,
+        strategy: 'reset_password_email_code',
+      });
+
+      return { error: null };
     } catch (err: unknown) {
       return { error: toAuthError(err) };
     }
@@ -179,26 +239,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updatePassword = async (password: string) => {
     try {
-      const { error } = await supabase.auth.updateUser({ password });
-      return { error: error ? toAuthError(error) : null };
+      if (!clerkUser) throw new Error('Not authenticated');
+      await clerkUser.updatePassword({ newPassword: password, currentPassword: undefined });
+      return { error: null };
     } catch (err: unknown) {
       return { error: toAuthError(err) };
+    }
+  };
+
+  const deleteAccount = async () => {
+    try {
+      if (clerkUser) {
+        await clerkUser.delete();
+      }
+      await convex.mutation(api.users.deleteAccount);
+      await clerkSignOut();
+      return { error: null };
+    } catch (err: unknown) {
+      console.error('Delete account error:', err);
+      return { error: toAuthError(err) };
+    }
+  };
+
+  const retryInitialization = () => {
+    if (clerkUser && isSignedIn && !initialized) {
+      setInitializationError(null);
+      initializingRef.current = false;
+      setLoading(true);
     }
   };
 
   return (
     <AuthContext.Provider value={{
       user,
-      session,
+      session: null,
       loading,
-      signUp,
-      signIn,
+      signUp: signUpFn,
+      signIn: signInFn,
       signInWithGoogle,
       signInWithGithub,
       signInWithMagicLink,
-      signOut,
+      signOut: signOutFn,
       resetPassword,
       updatePassword,
+      verifyEmail,
+      deleteAccount,
+      pendingEmail,
+      initializationError,
+      retryInitialization,
     }}>
       {children}
     </AuthContext.Provider>

@@ -1,38 +1,41 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useConvex } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import { useAuth } from './useAuth';
 import { Notification } from '@/types';
+
+function mapNotification(n: any): Notification {
+  return {
+    id: n._id,
+    user_id: n.userId,
+    title: n.title,
+    message: n.message,
+    type: n.type || 'info',
+    is_read: n.isRead ?? false,
+    created_at: new Date(n._creationTime).toISOString(),
+  };
+}
 
 export function useNotifications() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const convex = useConvex();
 
   const { data: notifications = [], isLoading, error } = useQuery({
     queryKey: ['notifications', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-      
-      if (error) throw error;
-      return data as Notification[];
+
+      const result = await convex.query(api.notifications.list);
+
+      return (result as any[]).map(mapNotification);
     },
     enabled: !!user?.id,
   });
 
   const markAsRead = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', id);
-      
-      if (error) throw error;
+      await convex.mutation(api.notifications.markAsRead, { id: id as any });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -41,15 +44,7 @@ export function useNotifications() {
 
   const markAllAsRead = useMutation({
     mutationFn: async () => {
-      if (!user?.id) return;
-      
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('user_id', user.id)
-        .eq('is_read', false);
-      
-      if (error) throw error;
+      await convex.mutation(api.notifications.markAllAsRead);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
@@ -58,12 +53,7 @@ export function useNotifications() {
 
   const deleteNotification = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', id);
-      
-      if (error) throw error;
+      await convex.mutation(api.notifications.remove, { id: id as any });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });

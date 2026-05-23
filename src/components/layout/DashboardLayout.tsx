@@ -26,7 +26,8 @@ function DashboardLayoutComponent({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!loading && !user) {
-      navigate('/');
+      const timeout = setTimeout(() => navigate('/'), 300);
+      return () => clearTimeout(timeout);
     }
   }, [user, loading, navigate]);
 

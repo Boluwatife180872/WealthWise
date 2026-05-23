@@ -305,7 +305,7 @@ export default function Goals() {
               const forecast = calculateForecast(goal);
 
               return (
-                <Card key={goal.id} className={`glass-card ${isComplete ? 'border-income/50' : ''}`}>
+                <Card key={goal.id} className={`glass-card ${isComplete ? 'border-income/50' : ''} cursor-pointer transition-colors duration-200 hover:bg-accent/5`}>
                   <CardHeader className="pb-2">
                     <div className="flex items-start justify-between">
                       <div>
@@ -377,8 +377,8 @@ export default function Goals() {
                     </div>
 
                     {isComplete && (
-                      <div className="p-3 rounded-lg bg-income/10 border border-income/30 text-center">
-                        <p className="text-sm font-medium text-income">🎉 Goal Achieved!</p>
+                      <div className="p-3 rounded-lg bg-income/20 border border-income/40 text-center">
+                        <p className="text-sm font-medium text-income">Goal Achieved!</p>
                       </div>
                     )}
                   </CardContent>
