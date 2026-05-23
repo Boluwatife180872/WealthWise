@@ -1,6 +1,7 @@
 import { v } from "convex/values";
-import { action, mutation, query, MutationCtx, QueryCtx } from "./_generated/server";
+import { action, mutation, query, internalMutation, MutationCtx, QueryCtx } from "./_generated/server";
 import { Doc, Id } from "./_generated/dataModel";
+import { internal } from "./_generated/api";
 import { DEFAULT_CATEGORIES } from "./constants";
 
 async function hashPassword(password: string): Promise<string> {
@@ -10,30 +11,11 @@ async function hashPassword(password: string): Promise<string> {
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
-async function createSession(ctx: { db: MutationCtx["db"] }, userId: Id<"users">) {
-  return await ctx.db.insert("sessions", {
-    userId,
-    expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000,
-  });
-}
-
 export async function getUserId(ctx: QueryCtx | MutationCtx, sessionId?: Id<"sessions">): Promise<Id<"users"> | null> {
   if (!sessionId) return null;
   const session = await ctx.db.get(sessionId);
   if (!session || session.expiresAt < Date.now()) return null;
   return session.userId;
-}
-
-async function createOAuthUser(ctx: { db: MutationCtx["db"] }, email: string, fullName: string) {
-  const userId = await ctx.db.insert("users", { email, passwordHash: "" });
-  await ctx.db.insert("profiles", { userId, fullName, monthlyIncome: 0, currency: "NGN" });
-  for (const cat of DEFAULT_CATEGORIES.expense) {
-    await ctx.db.insert("categories", { userId, name: cat.name, icon: cat.icon, color: cat.color, isDefault: true, type: "expense" });
-  }
-  for (const cat of DEFAULT_CATEGORIES.income) {
-    await ctx.db.insert("categories", { userId, name: cat.name, icon: cat.icon, color: cat.color, isDefault: true, type: "income" });
-  }
-  return userId;
 }
 
 export const signUp = mutation({
@@ -66,7 +48,7 @@ export const signUp = mutation({
       await ctx.db.insert("categories", { userId, name: cat.name, icon: cat.icon, color: cat.color, isDefault: true, type: "income" });
     }
 
-    const sessionId = await createSession(ctx, userId);
+    const sessionId = await ctx.db.insert("sessions", { userId, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 });
     return { userId, sessionId };
   },
 });
@@ -83,10 +65,63 @@ export const signIn = mutation({
     const passwordHash = await hashPassword(args.password);
     if (user.passwordHash !== passwordHash) throw new Error("Invalid email or password");
 
-    const sessionId = await createSession(ctx, user._id);
+    const sessionId = await ctx.db.insert("sessions", { userId: user._id, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 });
     return { userId: user._id, sessionId };
   },
 });
+
+export const signOut = mutation({
+  args: { sessionId: v.id("sessions") },
+  handler: async (ctx, args) => {
+    await ctx.db.delete(args.sessionId);
+  },
+});
+
+export const getCurrentUser = query({
+  args: { sessionId: v.id("sessions") },
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) return null;
+    const user = await ctx.db.get(userId);
+    if (!user) return null;
+    const profile = await ctx.db.query("profiles").withIndex("by_userId", q => q.eq("userId", userId)).first();
+    return {
+      id: userId,
+      email: user.email,
+      fullName: profile?.fullName || null,
+      currency: profile?.currency || null,
+    };
+  },
+});
+
+// -- Internal mutation (called by actions) --
+
+export const createUserAndSession = internalMutation({
+  args: {
+    email: v.string(),
+    fullName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    let user = await ctx.db.query("users").withIndex("by_email", q => q.eq("email", args.email)).first();
+
+    if (!user) {
+      const userId = await ctx.db.insert("users", { email: args.email, passwordHash: "" });
+      await ctx.db.insert("profiles", { userId, fullName: args.fullName, monthlyIncome: 0, currency: "NGN" });
+      for (const cat of DEFAULT_CATEGORIES.expense) {
+        await ctx.db.insert("categories", { userId, name: cat.name, icon: cat.icon, color: cat.color, isDefault: true, type: "expense" });
+      }
+      for (const cat of DEFAULT_CATEGORIES.income) {
+        await ctx.db.insert("categories", { userId, name: cat.name, icon: cat.icon, color: cat.color, isDefault: true, type: "income" });
+      }
+      user = await ctx.db.get(userId);
+    }
+
+    const sessionId = await ctx.db.insert("sessions", { userId: user!._id, expiresAt: Date.now() + 30 * 24 * 60 * 60 * 1000 });
+    return { userId: user!._id, sessionId };
+  },
+});
+
+// -- Actions (can use fetch()) --
 
 export const exchangeGoogleCredential = action({
   args: { credential: v.string() },
@@ -99,15 +134,7 @@ export const exchangeGoogleCredential = action({
     if (!email) throw new Error("No email returned from Google");
 
     const fullName: string = payload.name || email.split("@")[0];
-    let user = await ctx.db.query("users").withIndex("by_email", q => q.eq("email", email)).first();
-
-    if (!user) {
-      const userId = await createOAuthUser(ctx, email, fullName);
-      user = await ctx.db.get(userId);
-    }
-
-    const sessionId = await createSession(ctx, user!._id);
-    return { userId: user!._id, sessionId };
+    return await ctx.runMutation(internal.auth.createUserAndSession, { email, fullName });
   },
 });
 
@@ -138,38 +165,6 @@ export const exchangeGitHubCode = action({
     if (!email) throw new Error("No email from GitHub. Make sure your GitHub email is public.");
 
     const fullName: string = githubUser.name || githubUser.login || email.split("@")[0];
-    let user = await ctx.db.query("users").withIndex("by_email", q => q.eq("email", email)).first();
-
-    if (!user) {
-      const userId = await createOAuthUser(ctx, email, fullName);
-      user = await ctx.db.get(userId);
-    }
-
-    const sessionId = await createSession(ctx, user!._id);
-    return { userId: user!._id, sessionId };
-  },
-});
-
-export const signOut = mutation({
-  args: { sessionId: v.id("sessions") },
-  handler: async (ctx, args) => {
-    await ctx.db.delete(args.sessionId);
-  },
-});
-
-export const getCurrentUser = query({
-  args: { sessionId: v.id("sessions") },
-  handler: async (ctx, args) => {
-    const userId = await getUserId(ctx, args.sessionId);
-    if (!userId) return null;
-    const user = await ctx.db.get(userId);
-    if (!user) return null;
-    const profile = await ctx.db.query("profiles").withIndex("by_userId", q => q.eq("userId", userId)).first();
-    return {
-      id: userId,
-      email: user.email,
-      fullName: profile?.fullName || null,
-      currency: profile?.currency || null,
-    };
+    return await ctx.runMutation(internal.auth.createUserAndSession, { email, fullName });
   },
 });

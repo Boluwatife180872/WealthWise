@@ -234,8 +234,6 @@ function AuthForm() {
 
 export function AuthPage() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const isLoadingOAuth = !!searchParams.get('code');
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative">
@@ -246,15 +244,7 @@ export function AuthPage() {
           Home
         </Button>
       </div>
-
-      {isLoadingOAuth ? (
-        <div className="flex flex-col items-center gap-3 z-10">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-          <p className="text-muted-foreground">Completing sign-in...</p>
-        </div>
-      ) : (
-        <AuthForm />
-      )}
+      <AuthForm />
     </div>
   );
 }
