@@ -14,6 +14,7 @@ import Goals from "./pages/Goals";
 import Recurring from "./pages/Recurring";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import Balances from "./pages/Balances";
 import NotFound from "./pages/NotFound";
 
 const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL!);
@@ -37,6 +38,7 @@ const App = () => (
               <Route path="/recurring" element={<Recurring />} />
               <Route path="/analytics" element={<Analytics />} />
               <Route path="/settings" element={<Settings />} />
+              <Route path="/balances" element={<Balances />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

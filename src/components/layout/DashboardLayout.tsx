@@ -51,7 +51,7 @@ function DashboardLayoutComponent({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-16 glass border-b border-border/40 flex items-center justify-between px-4">
+      <header className="xl:hidden fixed top-0 left-0 right-0 z-50 h-16 glass border-b border-border/40 flex items-center justify-between px-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)}>
             {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -68,7 +68,7 @@ function DashboardLayoutComponent({ children }: { children: ReactNode }) {
       {/* Sidebar */}
       <aside className={cn(
         "fixed top-0 left-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border transition-transform duration-300",
-        "lg:translate-x-0",
+        "xl:translate-x-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full">
@@ -134,7 +134,7 @@ function DashboardLayoutComponent({ children }: { children: ReactNode }) {
       )}
 
       {/* Main content */}
-      <main className="lg:ml-64 min-h-screen pt-16 lg:pt-0">
+      <main className="xl:ml-64 min-h-screen pt-16 xl:pt-0">
         <div className="p-4 lg:p-8 max-w-7xl mx-auto">
           {children}
         </div>

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
 import { useBudgets } from '@/hooks/useBudgets';
 import { useCategories } from '@/hooks/useCategories';
 import { useMonthlyTransactions } from '@/hooks/useTransactions';
@@ -19,6 +20,8 @@ import { Navigate } from 'react-router-dom';
 
 export default function Budgets() {
   const { user, loading: authLoading } = useAuth();
+  const { profile } = useProfile();
+  const currency = profile?.currency || 'NGN';
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -210,7 +213,7 @@ export default function Budgets() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Budget</p>
-                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalBudget)}</p>
+                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalBudget, currency)}</p>
                 </div>
               </div>
             </CardContent>
@@ -223,7 +226,7 @@ export default function Budgets() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Spent</p>
-                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalSpent)}</p>
+                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalSpent, currency)}</p>
                 </div>
               </div>
             </CardContent>
@@ -237,7 +240,7 @@ export default function Budgets() {
                 <div>
                   <p className="text-sm text-muted-foreground">Remaining</p>
                   <p className={`text-2xl font-bold tabular-nums ${remainingBudget >= 0 ? 'text-income' : 'text-expense'}`}>
-                    {formatCurrency(Math.abs(remainingBudget))}
+                    {formatCurrency(Math.abs(remainingBudget), currency)}
                   </p>
                 </div>
               </div>
@@ -258,10 +261,10 @@ export default function Budgets() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chartData} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={true} vertical={false} />
-                    <XAxis type="number" tickFormatter={(v) => formatCurrency(v)} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <XAxis type="number" tickFormatter={(v) => formatCurrency(v, currency)} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <YAxis dataKey="name" type="category" width={100} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip 
-                      formatter={(value: number) => formatCurrency(value)}
+                      formatter={(value: number) => formatCurrency(value, currency)}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
                         border: '1px solid hsl(var(--border))',
@@ -327,7 +330,7 @@ export default function Budgets() {
                           <div>
                             <p className="font-medium">{budget.category?.name}</p>
                             <p className="text-sm text-muted-foreground">
-                              {formatCurrency(budget.spent || 0)} of {formatCurrency(Number(budget.amount))}
+                              {formatCurrency(budget.spent || 0, currency)} of {formatCurrency(Number(budget.amount), currency)}
                             </p>
                           </div>
                         </div>
@@ -355,7 +358,7 @@ export default function Budgets() {
                         className={`h-2 ${isOverBudget ? '[&>div]:bg-expense' : isNearLimit ? '[&>div]:bg-warning' : ''}`}
                       />
                       <p className="text-xs text-muted-foreground mt-2 text-right">
-                        {formatPercent(Math.min(progress, 100) / 100)} used • {formatCurrency(Math.max(0, Number(budget.amount) - (budget.spent || 0)))} remaining
+                        {formatPercent(Math.min(progress, 100) / 100)} used • {formatCurrency(Math.max(0, Number(budget.amount) - (budget.spent || 0)), currency)} remaining
                       </p>
                     </div>
                   );

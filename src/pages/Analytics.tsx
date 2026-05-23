@@ -3,10 +3,11 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
 import { useTransactions } from '@/hooks/useTransactions';
 import { useCategories } from '@/hooks/useCategories';
+import { useProfile } from '@/hooks/useProfile';
 import { formatCurrency, formatPercent, getMonthName } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp, TrendingDown, DollarSign, PiggyBank, BarChart3, LineChart as LineChartIcon } from 'lucide-react';
+import { TrendingUp, TrendingDown, Banknote, PiggyBank, BarChart3, LineChart as LineChartIcon } from 'lucide-react';
 import { Navigate } from 'react-router-dom';
 import { 
   LineChart, Line, AreaChart, Area, BarChart, Bar, 
@@ -18,6 +19,8 @@ export default function Analytics() {
   const { user, loading: authLoading } = useAuth();
   const { transactions, isLoading } = useTransactions();
   const { categories, expenseCategories } = useCategories();
+  const { profile } = useProfile();
+  const currency = profile?.currency || 'NGN';
   const [timeRange, setTimeRange] = useState('6');
 
   if (authLoading) {
@@ -156,8 +159,8 @@ export default function Analytics() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Income</p>
-                  <p className="text-xl font-bold tabular-nums">{formatCurrency(totalIncome)}</p>
-                  <p className="text-xs text-muted-foreground">Avg {formatCurrency(avgMonthlyIncome)}/mo</p>
+                  <p className="text-xl font-bold tabular-nums">{formatCurrency(totalIncome, currency)}</p>
+                  <p className="text-xs text-muted-foreground">Avg {formatCurrency(avgMonthlyIncome, currency)}/mo</p>
                 </div>
               </div>
             </CardContent>
@@ -170,8 +173,8 @@ export default function Analytics() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Expenses</p>
-                  <p className="text-xl font-bold tabular-nums">{formatCurrency(totalExpenses)}</p>
-                  <p className="text-xs text-muted-foreground">Avg {formatCurrency(avgMonthlyExpenses)}/mo</p>
+                  <p className="text-xl font-bold tabular-nums">{formatCurrency(totalExpenses, currency)}</p>
+                  <p className="text-xs text-muted-foreground">Avg {formatCurrency(avgMonthlyExpenses, currency)}/mo</p>
                 </div>
               </div>
             </CardContent>
@@ -180,12 +183,12 @@ export default function Analytics() {
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${netSavings >= 0 ? 'gradient-income' : 'gradient-expense'}`}>
-                  <DollarSign className={`w-6 h-6 ${netSavings >= 0 ? 'text-income-foreground' : 'text-expense-foreground'}`} />
+                  <Banknote className={`w-6 h-6 ${netSavings >= 0 ? 'text-income-foreground' : 'text-expense-foreground'}`} />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Net Savings</p>
                   <p className={`text-xl font-bold tabular-nums ${netSavings >= 0 ? 'text-income' : 'text-expense'}`}>
-                    {formatCurrency(netSavings)}
+                    {formatCurrency(netSavings, currency)}
                   </p>
                 </div>
               </div>
@@ -235,9 +238,9 @@ export default function Analytics() {
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                     <XAxis dataKey="shortMonth" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis tickFormatter={(v) => formatCurrency(v)} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis tickFormatter={(v) => formatCurrency(v, currency)} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip 
-                      formatter={(value: number) => formatCurrency(value)}
+                      formatter={(value: number) => formatCurrency(value, currency)}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
                         border: '1px solid hsl(var(--border))',
@@ -286,9 +289,9 @@ export default function Analytics() {
                   <BarChart data={cashFlowData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                     <XAxis dataKey="shortMonth" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis tickFormatter={(v) => formatCurrency(v)} stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis tickFormatter={(v) => formatCurrency(v, currency)} stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Tooltip 
-                      formatter={(value: number) => formatCurrency(value)}
+                      formatter={(value: number) => formatCurrency(value, currency)}
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
                         border: '1px solid hsl(var(--border))',
@@ -368,7 +371,7 @@ export default function Analytics() {
                           <span className="font-medium">{cat.name}</span>
                         </div>
                         <div className="text-right">
-                          <p className="font-medium tabular-nums">{formatCurrency(cat.amount)}</p>
+                          <p className="font-medium tabular-nums">{formatCurrency(cat.amount, currency)}</p>
                           <p className="text-xs text-muted-foreground">{formatPercent(percentage / 100)}</p>
                         </div>
                       </div>
@@ -401,22 +404,22 @@ export default function Analytics() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="p-4 rounded-xl bg-secondary/50 border border-border/40 transition-colors duration-200 hover:bg-accent/5">
                 <p className="text-sm text-muted-foreground mb-1">Projected Next Month Income</p>
-                <p className="text-xl font-bold tabular-nums text-income">{formatCurrency(Math.max(0, projectedIncome))}</p>
+                <p className="text-xl font-bold tabular-nums text-income">{formatCurrency(Math.max(0, projectedIncome), currency)}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {incomeTrend >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(incomeTrend))}/month trend
+                  {incomeTrend >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(incomeTrend), currency)}/month trend
                 </p>
               </div>
               <div className="p-4 rounded-xl bg-secondary/50 border border-border/40">
                 <p className="text-sm text-muted-foreground mb-1">Projected Next Month Expenses</p>
-                <p className="text-xl font-bold tabular-nums text-expense">{formatCurrency(Math.max(0, projectedExpenses))}</p>
+                <p className="text-xl font-bold tabular-nums text-expense">{formatCurrency(Math.max(0, projectedExpenses), currency)}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {expenseTrend >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(expenseTrend))}/month trend
+                  {expenseTrend >= 0 ? '↑' : '↓'} {formatCurrency(Math.abs(expenseTrend), currency)}/month trend
                 </p>
               </div>
               <div className="p-4 rounded-xl bg-secondary/50 border border-border/40">
                 <p className="text-sm text-muted-foreground mb-1">Projected Net Savings</p>
                 <p className={`text-xl font-bold tabular-nums ${projectedIncome - projectedExpenses >= 0 ? 'text-income' : 'text-expense'}`}>
-                  {formatCurrency(projectedIncome - projectedExpenses)}
+                  {formatCurrency(projectedIncome - projectedExpenses, currency)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">Based on linear trend projection</p>
               </div>

@@ -11,7 +11,7 @@ function mapProfile(p: any): Profile {
     user_id: p.userId,
     full_name: p.fullName ?? null,
     monthly_income: p.monthlyIncome ?? 0,
-    currency: p.currency ?? 'USD',
+    currency: p.currency ?? 'NGN',
     avatar_url: p.avatarUrl ?? null,
     created_at: new Date(p._creationTime).toISOString(),
     updated_at: p.updatedAt ? new Date(p.updatedAt).toISOString() : new Date(p._creationTime).toISOString(),

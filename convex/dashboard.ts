@@ -126,11 +126,12 @@ export const getCashFlow = query({
   handler: async (ctx, args) => {
     const userId = await getUserId(ctx, args.sessionId);
     if (!userId) return [];
-    const count = args.months ?? 6;
+    const count = args.months ?? 5;
+    const half = Math.floor(count / 2);
 
     const now = new Date();
-    const startDate = new Date(now.getFullYear(), now.getMonth() - count + 1, 1).getTime();
-    const endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
+    const startDate = new Date(now.getFullYear(), now.getMonth() - half, 1).getTime();
+    const endDate = new Date(now.getFullYear(), now.getMonth() + half + 1, 0, 23, 59, 59, 999).getTime();
 
     const transactions = await ctx.db
       .query("transactions")
@@ -144,7 +145,7 @@ export const getCashFlow = query({
     const monthly: Record<string, { income: number; expenses: number }> = {};
 
     for (let i = 0; i < count; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() - count + 1 + i, 1);
+      const d = new Date(now.getFullYear(), now.getMonth() - half + i, 1);
       const key = `${monthNames[d.getMonth()]} ${d.getFullYear()}`;
       monthly[key] = { income: 0, expenses: 0 };
     }

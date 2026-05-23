@@ -66,7 +66,7 @@ export function useCashFlowData() {
     queryFn: async (): Promise<TimeSeriesData[]> => {
       if (!sessionId) return [];
 
-      const result = await convex.query(api.dashboard.getCashFlow, { sessionId: sessionId as any, months: 6 });
+      const result = await convex.query(api.dashboard.getCashFlow, { sessionId: sessionId as any, months: 5 });
       return result as TimeSeriesData[];
     },
     enabled: !!sessionId,

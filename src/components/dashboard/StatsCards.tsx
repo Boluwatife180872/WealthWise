@@ -1,15 +1,34 @@
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useProfile } from '@/hooks/useProfile';
-import { formatCompactCurrency, formatPercent } from '@/lib/formatters';
+import { formatCurrency, formatCompactCurrency, formatPercent } from '@/lib/formatters';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Wallet, TrendingUp, TrendingDown, PiggyBank } from 'lucide-react';
+import { Wallet, TrendingUp, TrendingDown, PiggyBank, AlertTriangle, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+function abbreviated(value: number, currency: string): string {
+  const abs = Math.abs(value);
+  if (abs >= 1_000_000_000) return formatCompactCurrency(value, currency);
+  return formatCurrency(value, currency);
+}
 
 export function StatsCards() {
   const { stats, isLoading } = useDashboardStats();
   const { profile } = useProfile();
+  const navigate = useNavigate();
   const currency = profile?.currency || 'NGN';
+
+  const balance = stats?.totalBalance ?? 0;
+  const income = stats?.totalIncome ?? 0;
+  const expenses = stats?.totalExpenses ?? 0;
+  const isNegative = balance < 0;
+
+  const balanceFormatted = useMemo(() => abbreviated(balance, currency), [balance, currency]);
+  const incomeFormatted = useMemo(() => abbreviated(income, currency), [income, currency]);
+  const expensesFormatted = useMemo(() => abbreviated(expenses, currency), [expenses, currency]);
 
   if (isLoading) {
     return (
@@ -29,28 +48,33 @@ export function StatsCards() {
   const cards = [
     {
       title: 'Total Balance',
-      value: stats?.totalBalance || 0,
-      icon: Wallet,
-      color: 'text-primary',
-      bgColor: 'bg-primary/10',
+      value: balance,
+      formatted: balanceFormatted,
+      icon: isNegative ? AlertTriangle : Wallet,
+      color: isNegative ? 'text-red-500' : 'text-primary',
+      bgColor: isNegative ? 'bg-red-500/10' : 'bg-primary/10',
+      alert: isNegative,
     },
     {
       title: 'Monthly Income',
-      value: stats?.totalIncome || 0,
+      value: income,
+      formatted: incomeFormatted,
       icon: TrendingUp,
       color: 'text-income',
       bgColor: 'bg-income/10',
     },
     {
       title: 'Monthly Expenses',
-      value: stats?.totalExpenses || 0,
+      value: expenses,
+      formatted: expensesFormatted,
       icon: TrendingDown,
       color: 'text-expense',
       bgColor: 'bg-expense/10',
     },
     {
       title: 'Savings Rate',
-      value: stats?.savingsRate || 0,
+      value: stats?.savingsRate ?? 0,
+      formatted: formatPercent((stats?.savingsRate ?? 0) / 100),
       icon: PiggyBank,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
@@ -59,22 +83,44 @@ export function StatsCards() {
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {cards.map((card, index) => (
-        <Card key={card.title} className="glass-card overflow-hidden animate-slide-up" style={{ animationDelay: `${index * 100}ms` }}>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">{card.title}</p>
-              <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center', card.bgColor)}>
-                <card.icon className={cn('w-5 h-5', card.color)} />
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {cards.map((card, index) => (
+          <Card key={card.title} className={cn(
+            'glass-card animate-slide-up',
+            card.alert && 'ring-2 ring-red-500/40 animate-pulse'
+          )} style={{ animationDelay: `${index * 100}ms` }}>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">{card.title}</p>
+                <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center shrink-0', card.bgColor)}>
+                  <card.icon className={cn('w-5 h-5', card.color)} />
+                </div>
               </div>
-            </div>
-            <p className="text-2xl font-bold mt-2 tabular-nums">
-              {card.isPercent ? formatPercent(card.value / 100) : formatCompactCurrency(card.value, currency)}
-            </p>
-          </CardContent>
-        </Card>
-      ))}
+              <p
+                className={cn(
+                  'text-2xl font-bold mt-2 tabular-nums break-words',
+                  card.color
+                )}
+                title={card.formatted}
+              >
+                {card.formatted}
+              </p>
+              {card.alert && (
+                <p className="text-xs text-red-400 mt-1 flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3 shrink-0" />
+                  <span>Expenses exceed income</span>
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="flex justify-end">
+        <Button variant="link" size="sm" onClick={() => navigate('/balances')} className="gap-1 text-muted-foreground hover:text-foreground">
+          View full breakdown <ArrowRight className="w-3 h-3" />
+        </Button>
+      </div>
     </div>
   );
 }

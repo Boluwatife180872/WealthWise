@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
 import { useSavingsGoals } from '@/hooks/useSavingsGoals';
 import { formatCurrency, formatPercent, formatDate } from '@/lib/formatters';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,13 +10,15 @@ import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Plus, Edit2, Trash2, Target, TrendingUp, Calendar, DollarSign } from 'lucide-react';
+import { Plus, Edit2, Trash2, Target, TrendingUp, Calendar, Banknote } from 'lucide-react';
 import { toast } from 'sonner';
 import { Navigate } from 'react-router-dom';
 import { differenceInDays, format, addDays } from 'date-fns';
 
 export default function Goals() {
   const { user, loading: authLoading } = useAuth();
+  const { profile } = useProfile();
+  const currency = profile?.currency || 'NGN';
   const { goals: savingsGoals, isLoading, addGoal, updateGoal, addProgress, deleteGoal, isAdding, isUpdating } = useSavingsGoals();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isProgressDialogOpen, setIsProgressDialogOpen] = useState(false);
@@ -216,11 +219,11 @@ export default function Goals() {
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-xl gradient-income flex items-center justify-center">
-                  <DollarSign className="w-6 h-6 text-income-foreground" />
+                  <Banknote className="w-6 h-6 text-income-foreground" />
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Total Saved</p>
-                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalSaved)}</p>
+                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalSaved, currency)}</p>
                 </div>
               </div>
             </CardContent>
@@ -341,13 +344,13 @@ export default function Goals() {
                       <div>
                         <p className="text-sm text-muted-foreground">Saved</p>
                         <p className="text-2xl font-bold tabular-nums text-income">
-                          {formatCurrency(Number(goal.current_amount))}
+                          {formatCurrency(Number(goal.current_amount), currency)}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm text-muted-foreground">Target</p>
                         <p className="text-xl font-semibold tabular-nums">
-                          {formatCurrency(Number(goal.target_amount))}
+                          {formatCurrency(Number(goal.target_amount), currency)}
                         </p>
                       </div>
                     </div>
@@ -371,7 +374,7 @@ export default function Goals() {
                       </p>
                       {forecast && (
                         <p className="text-xs text-muted-foreground mt-1">
-                          Save {formatCurrency(forecast.dailyRequired)}/day to meet deadline ({forecast.daysRemaining} days left)
+                          Save {formatCurrency(forecast.dailyRequired, currency)}/day to meet deadline ({forecast.daysRemaining} days left)
                         </p>
                       )}
                     </div>
