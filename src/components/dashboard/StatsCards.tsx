@@ -1,6 +1,6 @@
 import { useDashboardStats } from '@/hooks/useDashboardStats';
 import { useProfile } from '@/hooks/useProfile';
-import { formatCurrency, formatPercent } from '@/lib/formatters';
+import { formatCompactCurrency, formatPercent } from '@/lib/formatters';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Wallet, TrendingUp, TrendingDown, PiggyBank } from 'lucide-react';
@@ -70,7 +70,7 @@ export function StatsCards() {
               </div>
             </div>
             <p className="text-2xl font-bold mt-2 tabular-nums">
-              {card.isPercent ? formatPercent(card.value / 100) : formatCurrency(card.value, currency)}
+              {card.isPercent ? formatPercent(card.value / 100) : formatCompactCurrency(card.value, currency)}
             </p>
           </CardContent>
         </Card>

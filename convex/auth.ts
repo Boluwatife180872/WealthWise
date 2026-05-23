@@ -77,6 +77,80 @@ export const signIn = mutation({
   },
 });
 
+async function createOAuthUser(ctx: MutationCtx, email: string, fullName: string) {
+  const userId = await ctx.db.insert("users", { email, passwordHash: "" });
+  await ctx.db.insert("profiles", { userId, fullName, monthlyIncome: 0, currency: "NGN" });
+  for (const cat of DEFAULT_CATEGORIES.expense) {
+    await ctx.db.insert("categories", { userId, name: cat.name, icon: cat.icon, color: cat.color, isDefault: true, type: "expense" });
+  }
+  for (const cat of DEFAULT_CATEGORIES.income) {
+    await ctx.db.insert("categories", { userId, name: cat.name, icon: cat.icon, color: cat.color, isDefault: true, type: "income" });
+  }
+  return userId;
+}
+
+export const exchangeGoogleCredential = mutation({
+  args: { credential: v.string() },
+  handler: async (ctx, args) => {
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${args.credential}`);
+    if (!response.ok) throw new Error("Invalid Google credential");
+
+    const payload = await response.json();
+    const email: string = payload.email;
+    if (!email) throw new Error("No email returned from Google");
+
+    const fullName: string = payload.name || email.split("@")[0];
+    let user = await ctx.db.query("users").withIndex("by_email", q => q.eq("email", email)).first();
+
+    if (!user) {
+      const userId = await createOAuthUser(ctx, email, fullName);
+      user = await ctx.db.get(userId);
+    }
+
+    const sessionId = await createSession(ctx, user!._id);
+    return { userId: user!._id, sessionId };
+  },
+});
+
+export const exchangeGitHubCode = mutation({
+  args: { code: v.string() },
+  handler: async (ctx, args) => {
+    const tokenResp = await fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({
+        client_id: process.env.GITHUB_CLIENT_ID,
+        client_secret: process.env.GITHUB_CLIENT_SECRET,
+        code: args.code,
+      }),
+    });
+    if (!tokenResp.ok) throw new Error("Failed to exchange GitHub code");
+
+    const tokenData = await tokenResp.json();
+    if (tokenData.error) throw new Error(tokenData.error_description || "GitHub OAuth error");
+
+    const userResp = await fetch("https://api.github.com/user", {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+    if (!userResp.ok) throw new Error("Failed to get GitHub user info");
+
+    const githubUser = await userResp.json();
+    const email: string = githubUser.email;
+    if (!email) throw new Error("No email from GitHub. Make sure your GitHub email is public.");
+
+    const fullName: string = githubUser.name || githubUser.login || email.split("@")[0];
+    let user = await ctx.db.query("users").withIndex("by_email", q => q.eq("email", email)).first();
+
+    if (!user) {
+      const userId = await createOAuthUser(ctx, email, fullName);
+      user = await ctx.db.get(userId);
+    }
+
+    const sessionId = await createSession(ctx, user!._id);
+    return { userId: user!._id, sessionId };
+  },
+});
+
 export const signOut = mutation({
   args: { sessionId: v.id("sessions") },
   handler: async (ctx, args) => {

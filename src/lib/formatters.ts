@@ -15,14 +15,23 @@ export function formatCurrency(amount: number, currencyCode: string = 'NGN'): st
 export function formatCompactCurrency(amount: number, currencyCode: string = 'NGN'): string {
   const currency = CURRENCIES.find(c => c.code === currencyCode);
   const symbol = currency?.symbol || '$';
-  
-  if (Math.abs(amount) >= 1000000) {
-    return `${symbol}${(amount / 1000000).toFixed(1)}M`;
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? '-' : '';
+
+  if (abs >= 1_000_000_000) {
+    return `${sign}${symbol}${(abs / 1_000_000_000).toFixed(1)}B`;
   }
-  if (Math.abs(amount) >= 1000) {
-    return `${symbol}${(amount / 1000).toFixed(1)}K`;
+  if (abs >= 1_000_000) {
+    return `${sign}${symbol}${(abs / 1_000_000).toFixed(1)}M`;
   }
-  return formatCurrency(amount, currencyCode);
+  if (abs >= 1_000) {
+    return `${sign}${symbol}${(abs / 1_000).toFixed(1)}K`;
+  }
+  const formatted = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(abs);
+  return `${sign}${symbol}${formatted}`;
 }
 
 export function formatPercent(value: number, showSign: boolean = false): string {

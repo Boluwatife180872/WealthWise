@@ -15,6 +15,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, fullName?: string) => Promise<AuthResult>;
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<AuthResult>;
+  exchangeGoogleCredential: (credential: string) => Promise<AuthResult>;
+  exchangeGitHubCode: (code: string) => Promise<AuthResult>;
   initializationError: Error | null;
   retryInitialization: () => void;
 }
@@ -121,6 +123,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [convex, sessionId]);
 
+  const exchangeGoogleCredential = useCallback(async (credential: string): Promise<AuthResult> => {
+    try {
+      const result = await convex.mutation(api.auth.exchangeGoogleCredential, { credential }) as { userId: string; sessionId: string };
+      localStorage.setItem(SESSION_KEY, result.sessionId);
+      setSessionId(result.sessionId);
+      setUser({ id: result.userId, email: '' });
+      return { error: null };
+    } catch (err: unknown) {
+      console.error('Google sign-in error:', err);
+      return { error: err instanceof Error ? err : new Error('Google sign-in failed.') };
+    }
+  }, [convex]);
+
+  const exchangeGitHubCode = useCallback(async (code: string): Promise<AuthResult> => {
+    try {
+      const result = await convex.mutation(api.auth.exchangeGitHubCode, { code }) as { userId: string; sessionId: string };
+      localStorage.setItem(SESSION_KEY, result.sessionId);
+      setSessionId(result.sessionId);
+      setUser({ id: result.userId, email: '' });
+      return { error: null };
+    } catch (err: unknown) {
+      console.error('GitHub sign-in error:', err);
+      return { error: err instanceof Error ? err : new Error('GitHub sign-in failed.') };
+    }
+  }, [convex]);
+
   const retryInitialization = useCallback(() => {
     if (sessionId) {
       setLoading(true);
@@ -137,6 +165,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUp,
       signOut,
       deleteAccount,
+      exchangeGoogleCredential,
+      exchangeGitHubCode,
       initializationError,
       retryInitialization,
     }}>
