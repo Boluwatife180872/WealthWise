@@ -1,13 +1,13 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getUserId } from "./auth";
 
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-    const userId = identity.subject;
+  args: { sessionId: v.id("sessions") },
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) return [];
 
     const items = await ctx.db
       .query("recurringTransactions")
@@ -28,6 +28,7 @@ export const list = query({
 
 export const create = mutation({
   args: {
+    sessionId: v.id("sessions"),
     title: v.string(),
     amount: v.float64(),
     type: v.union(v.literal("income"), v.literal("expense")),
@@ -41,9 +42,8 @@ export const create = mutation({
     nextRunDate: v.float64(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-    const userId = identity.subject;
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
 
     const id = await ctx.db.insert("recurringTransactions", {
       userId,
@@ -64,6 +64,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
+    sessionId: v.id("sessions"),
     id: v.id("recurringTransactions"),
     title: v.optional(v.string()),
     amount: v.optional(v.float64()),
@@ -81,8 +82,8 @@ export const update = mutation({
     isActive: v.optional(v.boolean()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
 
     const { id, ...updates } = args;
     const sanitized: Record<string, unknown> = {};
@@ -105,12 +106,13 @@ export const update = mutation({
 
 export const toggleActive = mutation({
   args: {
+    sessionId: v.id("sessions"),
     id: v.id("recurringTransactions"),
     isActive: v.boolean(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
 
     await ctx.db.patch(args.id, { isActive: args.isActive });
     return await ctx.db.get(args.id);
@@ -118,10 +120,10 @@ export const toggleActive = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("recurringTransactions") },
+  args: { sessionId: v.id("sessions"), id: v.id("recurringTransactions") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
     await ctx.db.delete(args.id);
   },
 });

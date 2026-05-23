@@ -29,7 +29,7 @@ function mapBudget(b: any): Budget {
 }
 
 export function useBudgets(month?: number, year?: number) {
-  const { user } = useAuth();
+  const { user, sessionId } = useAuth();
   const queryClient = useQueryClient();
   const convex = useConvex();
   const now = new Date();
@@ -39,23 +39,25 @@ export function useBudgets(month?: number, year?: number) {
   const { data: budgets = [], isLoading, error } = useQuery({
     queryKey: ['budgets', user?.id, targetMonth, targetYear],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!sessionId) return [];
 
       const result = await convex.query(api.budgets.list, {
+        sessionId: sessionId as any,
         month: targetMonth,
         year: targetYear,
       });
 
       return (result as any[]).map(mapBudget);
     },
-    enabled: !!user?.id,
+    enabled: !!sessionId,
   });
 
   const addBudget = useMutation({
     mutationFn: async (budget: { category_id: string; amount: number; month: number; year: number }) => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!sessionId) throw new Error('Not authenticated');
 
       const result = await convex.mutation(api.budgets.create, {
+        sessionId: sessionId as any,
         categoryId: budget.category_id as any,
         amount: budget.amount,
         month: budget.month,
@@ -82,6 +84,7 @@ export function useBudgets(month?: number, year?: number) {
   const updateBudget = useMutation({
     mutationFn: async ({ id, amount }: { id: string; amount: number }) => {
       const result = await convex.mutation(api.budgets.update, {
+        sessionId: sessionId as any,
         id: id as any,
         amount,
       });
@@ -101,7 +104,7 @@ export function useBudgets(month?: number, year?: number) {
 
   const deleteBudget = useMutation({
     mutationFn: async (id: string) => {
-      await convex.mutation(api.budgets.remove, { id: id as any });
+      await convex.mutation(api.budgets.remove, { sessionId: sessionId as any, id: id as any });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['budgets'] });

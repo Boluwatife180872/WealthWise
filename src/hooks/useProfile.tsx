@@ -19,27 +19,28 @@ function mapProfile(p: any): Profile {
 }
 
 export function useProfile() {
-  const { user } = useAuth();
+  const { user, sessionId } = useAuth();
   const queryClient = useQueryClient();
   const convex = useConvex();
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['profile', user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!sessionId) return null;
 
-      const result = await convex.query(api.users.getProfile);
+      const result = await convex.query(api.users.getProfile, { sessionId: sessionId as any });
 
       return result ? mapProfile(result) : null;
     },
-    enabled: !!user?.id,
+    enabled: !!sessionId,
   });
 
   const updateProfile = useMutation({
     mutationFn: async (updates: Partial<Profile>) => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!sessionId) throw new Error('Not authenticated');
 
       const result = await convex.mutation(api.users.updateProfile, {
+        sessionId: sessionId as any,
         fullName: updates.full_name ?? undefined,
         monthlyIncome: updates.monthly_income ?? undefined,
         currency: updates.currency ?? undefined,

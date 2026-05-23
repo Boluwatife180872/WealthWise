@@ -1,13 +1,13 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getUserId } from "./auth";
 
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-    const userId = identity.subject;
+  args: { sessionId: v.id("sessions") },
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) return [];
 
     const notifications = await ctx.db
       .query("notifications")
@@ -21,20 +21,19 @@ export const list = query({
 });
 
 export const markAsRead = mutation({
-  args: { id: v.id("notifications") },
+  args: { sessionId: v.id("sessions"), id: v.id("notifications") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
     await ctx.db.patch(args.id, { isRead: true });
   },
 });
 
 export const markAllAsRead = mutation({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-    const userId = identity.subject;
+  args: { sessionId: v.id("sessions") },
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
 
     const notifications = await ctx.db
       .query("notifications")
@@ -50,10 +49,10 @@ export const markAllAsRead = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("notifications") },
+  args: { sessionId: v.id("sessions"), id: v.id("notifications") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
     await ctx.db.delete(args.id);
   },
 });

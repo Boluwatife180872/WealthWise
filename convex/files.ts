@@ -1,20 +1,24 @@
 import { v } from "convex/values";
 import { mutation } from "./_generated/server";
+import { getUserId } from "./auth";
 
-export const generateUploadUrl = mutation(async (ctx) => {
-  const identity = await ctx.auth.getUserIdentity();
-  if (!identity) throw new Error("Not authenticated");
-  return await ctx.storage.generateUploadUrl();
+export const generateUploadUrl = mutation({
+  args: { sessionId: v.id("sessions") },
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
+    return await ctx.storage.generateUploadUrl();
+  },
 });
 
 export const saveAvatar = mutation({
   args: {
+    sessionId: v.id("sessions"),
     storageId: v.id("_storage"),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-    const userId = identity.subject;
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
 
     const url = await ctx.storage.getUrl(args.storageId);
     if (!url) throw new Error("Failed to get URL");

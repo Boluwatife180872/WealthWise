@@ -1,12 +1,13 @@
 import { v } from "convex/values";
 import { query } from "./_generated/server";
+import { getUserId } from "./auth";
 
 
 export const getStats = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
+  args: { sessionId: v.id("sessions") },
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) {
       return {
         totalBalance: 0,
         totalIncome: 0,
@@ -15,7 +16,6 @@ export const getStats = query({
         savingsRate: 0,
       };
     }
-    const userId = identity.subject;
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
@@ -73,11 +73,10 @@ export const getStats = query({
 });
 
 export const getExpensesByCategory = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-    const userId = identity.subject;
+  args: { sessionId: v.id("sessions") },
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) return [];
 
     const now = new Date();
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
@@ -121,12 +120,12 @@ export const getExpensesByCategory = query({
 
 export const getCashFlow = query({
   args: {
+    sessionId: v.id("sessions"),
     months: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-    const userId = identity.subject;
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) return [];
     const count = args.months ?? 6;
 
     const now = new Date();

@@ -6,16 +6,16 @@ import { Category, TransactionType } from '@/types';
 import { toast } from 'sonner';
 
 export function useCategories() {
-  const { user } = useAuth();
+  const { user, sessionId } = useAuth();
   const queryClient = useQueryClient();
   const convex = useConvex();
 
   const { data: categories = [], isLoading, error } = useQuery({
     queryKey: ['categories', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!sessionId) return [];
 
-      const result = await convex.query(api.categories.list);
+      const result = await convex.query(api.categories.list, { sessionId: sessionId as any });
 
       return (result as any[]).map((c: any) => ({
         id: c._id,
@@ -28,14 +28,15 @@ export function useCategories() {
         created_at: new Date(c._creationTime).toISOString(),
       })) as Category[];
     },
-    enabled: !!user?.id,
+    enabled: !!sessionId,
   });
 
   const addCategory = useMutation({
     mutationFn: async (category: { name: string; icon: string; color: string; type: TransactionType | null }) => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!sessionId) throw new Error('Not authenticated');
 
       const result = await convex.mutation(api.categories.create, {
+        sessionId: sessionId as any,
         name: category.name,
         icon: category.icon,
         color: category.color,
@@ -61,6 +62,7 @@ export function useCategories() {
   const updateCategory = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Category> & { id: string }) => {
       const result = await convex.mutation(api.categories.update, {
+        sessionId: sessionId as any,
         id: id as any,
         name: updates.name,
         icon: updates.icon,
@@ -86,7 +88,7 @@ export function useCategories() {
 
   const deleteCategory = useMutation({
     mutationFn: async (id: string) => {
-      await convex.mutation(api.categories.remove, { id: id as any });
+      await convex.mutation(api.categories.remove, { sessionId: sessionId as any, id: id as any });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });

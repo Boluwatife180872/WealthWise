@@ -1,6 +1,4 @@
-import { ClerkProvider, useAuth as useClerkAuth } from "@clerk/clerk-react";
-import { ConvexProviderWithClerk } from "convex/react-clerk";
-import { ConvexReactClient } from "convex/react";
+import { ConvexReactClient, ConvexProvider } from "convex/react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,32 +20,30 @@ const convex = new ConvexReactClient(import.meta.env.VITE_CONVEX_URL!);
 const queryClient = new QueryClient();
 
 const App = () => (
-  <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY!}>
-    <ConvexProviderWithClerk client={convex} useAuth={useClerkAuth}>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/transactions" element={<Transactions />} />
-                <Route path="/budgets" element={<Budgets />} />
-                <Route path="/goals" element={<Goals />} />
-                <Route path="/recurring" element={<Recurring />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ConvexProviderWithClerk>
-  </ClerkProvider>
+  <ConvexProvider client={convex}>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/transactions" element={<Transactions />} />
+              <Route path="/budgets" element={<Budgets />} />
+              <Route path="/goals" element={<Goals />} />
+              <Route path="/recurring" element={<Recurring />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/settings" element={<Settings />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ConvexProvider>
 );
 
 export default App;

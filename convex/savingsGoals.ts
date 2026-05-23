@@ -1,13 +1,13 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getUserId } from "./auth";
 
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-    const userId = identity.subject;
+  args: { sessionId: v.id("sessions") },
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) return [];
 
     const goals = await ctx.db
       .query("savingsGoals")
@@ -20,14 +20,14 @@ export const list = query({
 
 export const create = mutation({
   args: {
+    sessionId: v.id("sessions"),
     title: v.string(),
     targetAmount: v.float64(),
     deadline: v.optional(v.float64()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-    const userId = identity.subject;
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
 
     const id = await ctx.db.insert("savingsGoals", {
       userId,
@@ -43,6 +43,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
+    sessionId: v.id("sessions"),
     id: v.id("savingsGoals"),
     title: v.optional(v.string()),
     targetAmount: v.optional(v.float64()),
@@ -50,8 +51,8 @@ export const update = mutation({
     deadline: v.optional(v.float64()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
 
     const { id, ...updates } = args;
     const sanitized: Record<string, unknown> = {};
@@ -67,12 +68,13 @@ export const update = mutation({
 
 export const addProgress = mutation({
   args: {
+    sessionId: v.id("sessions"),
     id: v.id("savingsGoals"),
     amount: v.float64(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
 
     const goal = await ctx.db.get(args.id);
     if (!goal) throw new Error("Goal not found");
@@ -84,10 +86,10 @@ export const addProgress = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("savingsGoals") },
+  args: { sessionId: v.id("sessions"), id: v.id("savingsGoals") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
     await ctx.db.delete(args.id);
   },
 });

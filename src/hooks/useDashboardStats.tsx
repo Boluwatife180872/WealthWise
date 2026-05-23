@@ -6,7 +6,7 @@ import { DashboardStats, ChartData, TimeSeriesData } from '@/types';
 import { startOfMonth, format } from 'date-fns';
 
 export function useDashboardStats() {
-  const { user } = useAuth();
+  const { user, sessionId } = useAuth();
   const convex = useConvex();
   const now = new Date();
   const monthStart = startOfMonth(now);
@@ -14,7 +14,7 @@ export function useDashboardStats() {
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ['dashboard-stats', user?.id, format(monthStart, 'yyyy-MM')],
     queryFn: async (): Promise<DashboardStats> => {
-      if (!user?.id) {
+      if (!sessionId) {
         return {
           totalBalance: 0,
           totalIncome: 0,
@@ -24,10 +24,10 @@ export function useDashboardStats() {
         };
       }
 
-      const result = await convex.query(api.dashboard.getStats);
+      const result = await convex.query(api.dashboard.getStats, { sessionId: sessionId as any });
       return result as DashboardStats;
     },
-    enabled: !!user?.id,
+    enabled: !!sessionId,
   });
 
   return { stats: stats ?? {
@@ -40,7 +40,7 @@ export function useDashboardStats() {
 }
 
 export function useExpensesByCategory() {
-  const { user } = useAuth();
+  const { user, sessionId } = useAuth();
   const convex = useConvex();
   const now = new Date();
   const monthStart = startOfMonth(now);
@@ -48,27 +48,27 @@ export function useExpensesByCategory() {
   return useQuery({
     queryKey: ['expenses-by-category', user?.id, format(monthStart, 'yyyy-MM')],
     queryFn: async (): Promise<ChartData[]> => {
-      if (!user?.id) return [];
+      if (!sessionId) return [];
 
-      const result = await convex.query(api.dashboard.getExpensesByCategory);
+      const result = await convex.query(api.dashboard.getExpensesByCategory, { sessionId: sessionId as any });
       return result as ChartData[];
     },
-    enabled: !!user?.id,
+    enabled: !!sessionId,
   });
 }
 
 export function useCashFlowData() {
-  const { user } = useAuth();
+  const { user, sessionId } = useAuth();
   const convex = useConvex();
 
   return useQuery({
     queryKey: ['cash-flow', user?.id],
     queryFn: async (): Promise<TimeSeriesData[]> => {
-      if (!user?.id) return [];
+      if (!sessionId) return [];
 
-      const result = await convex.query(api.dashboard.getCashFlow, { months: 6 });
+      const result = await convex.query(api.dashboard.getCashFlow, { sessionId: sessionId as any, months: 6 });
       return result as TimeSeriesData[];
     },
-    enabled: !!user?.id,
+    enabled: !!sessionId,
   });
 }

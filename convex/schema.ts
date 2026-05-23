@@ -2,8 +2,18 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+  users: defineTable({
+    email: v.string(),
+    passwordHash: v.string(),
+  }).index("by_email", ["email"]),
+
+  sessions: defineTable({
+    userId: v.id("users"),
+    expiresAt: v.float64(),
+  }).index("by_userId", ["userId"]),
+
   profiles: defineTable({
-    userId: v.string(),
+    userId: v.id("users"),
     fullName: v.optional(v.string()),
     monthlyIncome: v.optional(v.float64()),
     currency: v.optional(v.string()),
@@ -12,7 +22,7 @@ export default defineSchema({
   }).index("by_userId", ["userId"]),
 
   categories: defineTable({
-    userId: v.string(),
+    userId: v.id("users"),
     name: v.string(),
     icon: v.optional(v.string()),
     color: v.optional(v.string()),
@@ -21,7 +31,7 @@ export default defineSchema({
   }).index("by_userId", ["userId"]),
 
   transactions: defineTable({
-    userId: v.string(),
+    userId: v.id("users"),
     amount: v.float64(),
     type: v.union(v.literal("income"), v.literal("expense")),
     categoryId: v.optional(v.id("categories")),
@@ -33,7 +43,7 @@ export default defineSchema({
     .index("by_userId_type", ["userId", "type"]),
 
   budgets: defineTable({
-    userId: v.string(),
+    userId: v.id("users"),
     categoryId: v.id("categories"),
     amount: v.float64(),
     month: v.float64(),
@@ -43,7 +53,7 @@ export default defineSchema({
     .index("by_userId_month_year", ["userId", "month", "year"]),
 
   savingsGoals: defineTable({
-    userId: v.string(),
+    userId: v.id("users"),
     title: v.string(),
     targetAmount: v.float64(),
     currentAmount: v.optional(v.float64()),
@@ -51,7 +61,7 @@ export default defineSchema({
   }).index("by_userId", ["userId"]),
 
   recurringTransactions: defineTable({
-    userId: v.string(),
+    userId: v.id("users"),
     title: v.string(),
     amount: v.float64(),
     type: v.union(v.literal("income"), v.literal("expense")),
@@ -69,7 +79,7 @@ export default defineSchema({
     .index("by_userId_nextRun", ["userId", "nextRunDate"]),
 
   notifications: defineTable({
-    userId: v.string(),
+    userId: v.id("users"),
     title: v.string(),
     message: v.string(),
     type: v.optional(v.string()),

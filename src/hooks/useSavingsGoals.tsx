@@ -18,27 +18,28 @@ function mapGoal(g: any): SavingsGoal {
 }
 
 export function useSavingsGoals() {
-  const { user } = useAuth();
+  const { user, sessionId } = useAuth();
   const queryClient = useQueryClient();
   const convex = useConvex();
 
   const { data: goals = [], isLoading, error } = useQuery({
     queryKey: ['savings-goals', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!sessionId) return [];
 
-      const result = await convex.query(api.savingsGoals.list);
+      const result = await convex.query(api.savingsGoals.list, { sessionId: sessionId as any });
 
       return (result as any[]).map(mapGoal);
     },
-    enabled: !!user?.id,
+    enabled: !!sessionId,
   });
 
   const addGoal = useMutation({
     mutationFn: async (goal: { title: string; target_amount: number; deadline?: string }) => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!sessionId) throw new Error('Not authenticated');
 
       const result = await convex.mutation(api.savingsGoals.create, {
+        sessionId: sessionId as any,
         title: goal.title,
         targetAmount: goal.target_amount,
         deadline: goal.deadline ? new Date(goal.deadline).getTime() : undefined,
@@ -59,6 +60,7 @@ export function useSavingsGoals() {
   const updateGoal = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<SavingsGoal> & { id: string }) => {
       const result = await convex.mutation(api.savingsGoals.update, {
+        sessionId: sessionId as any,
         id: id as any,
         title: updates.title,
         targetAmount: updates.target_amount,
@@ -81,6 +83,7 @@ export function useSavingsGoals() {
   const addProgress = useMutation({
     mutationFn: async ({ id, amount }: { id: string; amount: number }) => {
       const result = await convex.mutation(api.savingsGoals.addProgress, {
+        sessionId: sessionId as any,
         id: id as any,
         amount,
       });
@@ -99,7 +102,7 @@ export function useSavingsGoals() {
 
   const deleteGoal = useMutation({
     mutationFn: async (id: string) => {
-      await convex.mutation(api.savingsGoals.remove, { id: id as any });
+      await convex.mutation(api.savingsGoals.remove, { sessionId: sessionId as any, id: id as any });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savings-goals'] });

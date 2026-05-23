@@ -39,16 +39,17 @@ function mapTransaction(t: any): Transaction {
 }
 
 export function useTransactions(filters?: TransactionFilters) {
-  const { user } = useAuth();
+  const { user, sessionId } = useAuth();
   const queryClient = useQueryClient();
   const convex = useConvex();
 
   const { data: transactions = [], isLoading, error } = useQuery({
     queryKey: ['transactions', user?.id, filters],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!sessionId) return [];
 
       const result = await convex.query(api.transactions.list, {
+        sessionId: sessionId as any,
         startDate: filters?.startDate?.getTime(),
         endDate: filters?.endDate?.getTime(),
         type: filters?.type,
@@ -59,7 +60,7 @@ export function useTransactions(filters?: TransactionFilters) {
 
       return (result as any[]).map(mapTransaction);
     },
-    enabled: !!user?.id,
+    enabled: !!sessionId,
   });
 
   const addTransaction = useMutation({
@@ -70,9 +71,10 @@ export function useTransactions(filters?: TransactionFilters) {
       notes?: string;
       date?: string;
     }) => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!sessionId) throw new Error('Not authenticated');
 
       const result = await convex.mutation(api.transactions.create, {
+        sessionId: sessionId as any,
         amount: transaction.amount,
         type: transaction.type,
         categoryId: transaction.category_id as any,
@@ -98,6 +100,7 @@ export function useTransactions(filters?: TransactionFilters) {
   const updateTransaction = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<Transaction> & { id: string }) => {
       const result = await convex.mutation(api.transactions.update, {
+        sessionId: sessionId as any,
         id: id as any,
         amount: updates.amount,
         type: updates.type,
@@ -123,7 +126,7 @@ export function useTransactions(filters?: TransactionFilters) {
 
   const deleteTransaction = useMutation({
     mutationFn: async (id: string) => {
-      await convex.mutation(api.transactions.remove, { id: id as any });
+      await convex.mutation(api.transactions.remove, { sessionId: sessionId as any, id: id as any });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });

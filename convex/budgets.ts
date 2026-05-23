@@ -1,16 +1,17 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getUserId } from "./auth";
 
 
 export const list = query({
   args: {
+    sessionId: v.id("sessions"),
     month: v.number(),
     year: v.number(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-    const userId = identity.subject;
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) return [];
 
     const budgets = await ctx.db
       .query("budgets")
@@ -31,15 +32,15 @@ export const list = query({
 
 export const create = mutation({
   args: {
+    sessionId: v.id("sessions"),
     categoryId: v.id("categories"),
     amount: v.float64(),
     month: v.float64(),
     year: v.float64(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-    const userId = identity.subject;
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
 
     const existing = await ctx.db
       .query("budgets")
@@ -72,12 +73,13 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
+    sessionId: v.id("sessions"),
     id: v.id("budgets"),
     amount: v.float64(),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
 
     await ctx.db.patch(args.id, { amount: args.amount });
     const doc = await ctx.db.get(args.id);
@@ -88,10 +90,10 @@ export const update = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("budgets") },
+  args: { sessionId: v.id("sessions"), id: v.id("budgets") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
     await ctx.db.delete(args.id);
   },
 });

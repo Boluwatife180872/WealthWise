@@ -1,13 +1,13 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
+import { getUserId } from "./auth";
 
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) return [];
-    const userId = identity.subject;
+  args: { sessionId: v.id("sessions") },
+  handler: async (ctx, args) => {
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) return [];
     const categories = await ctx.db
       .query("categories")
       .withIndex("by_userId", (q) => q.eq("userId", userId))
@@ -18,15 +18,15 @@ export const list = query({
 
 export const create = mutation({
   args: {
+    sessionId: v.id("sessions"),
     name: v.string(),
     icon: v.string(),
     color: v.string(),
     type: v.union(v.literal("income"), v.literal("expense"), v.null()),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
-    const userId = identity.subject;
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
 
     const id = await ctx.db.insert("categories", {
       userId,
@@ -43,6 +43,7 @@ export const create = mutation({
 
 export const update = mutation({
   args: {
+    sessionId: v.id("sessions"),
     id: v.id("categories"),
     name: v.optional(v.string()),
     icon: v.optional(v.string()),
@@ -50,8 +51,8 @@ export const update = mutation({
     type: v.optional(v.union(v.literal("income"), v.literal("expense"), v.null())),
   },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
 
     const { id, ...updates } = args;
     const sanitized: Record<string, unknown> = {};
@@ -66,10 +67,10 @@ export const update = mutation({
 });
 
 export const remove = mutation({
-  args: { id: v.id("categories") },
+  args: { sessionId: v.id("sessions"), id: v.id("categories") },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) throw new Error("Not authenticated");
+    const userId = await getUserId(ctx, args.sessionId);
+    if (!userId) throw new Error("Not authenticated");
     await ctx.db.delete(args.id);
   },
 });

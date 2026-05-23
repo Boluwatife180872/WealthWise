@@ -35,7 +35,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 type FinancialFormValues = z.infer<typeof financialSchema>;
 
 export default function Settings() {
-  const { user, loading: authLoading, signOut, deleteAccount } = useAuth();
+  const { user, sessionId, loading: authLoading, signOut, deleteAccount } = useAuth();
   const { profile, isLoading: profileLoading, updateProfile, isUpdating } = useProfile();
   const navigate = useNavigate();
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -113,7 +113,7 @@ export default function Settings() {
 
     setIsUploading(true);
     try {
-      const uploadUrl = await convex.mutation(api.files.generateUploadUrl);
+      const uploadUrl = await convex.mutation(api.files.generateUploadUrl, { sessionId: sessionId as any });
 
       const response = await fetch(uploadUrl, {
         method: 'POST',
@@ -129,7 +129,7 @@ export default function Settings() {
       const { storageId } = await response.json();
       if (!storageId) throw new Error('No storage ID returned from upload');
 
-      const url = await convex.mutation(api.files.saveAvatar, { storageId });
+      const url = await convex.mutation(api.files.saveAvatar, { sessionId: sessionId as any, storageId });
 
       if (url) {
         updateProfile({ avatar_url: url });

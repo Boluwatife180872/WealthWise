@@ -31,20 +31,20 @@ function mapRecurring(r: any): RecurringTransaction {
 }
 
 export function useRecurringTransactions() {
-  const { user } = useAuth();
+  const { user, sessionId } = useAuth();
   const queryClient = useQueryClient();
   const convex = useConvex();
 
   const { data: recurringTransactions = [], isLoading, error } = useQuery({
     queryKey: ['recurring-transactions', user?.id],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!sessionId) return [];
 
-      const result = await convex.query(api.recurringTransactions.list);
+      const result = await convex.query(api.recurringTransactions.list, { sessionId: sessionId as any });
 
       return (result as any[]).map(mapRecurring);
     },
-    enabled: !!user?.id,
+    enabled: !!sessionId,
   });
 
   const addRecurring = useMutation({
@@ -56,9 +56,10 @@ export function useRecurringTransactions() {
       frequency: FrequencyType;
       next_run_date: string;
     }) => {
-      if (!user?.id) throw new Error('Not authenticated');
+      if (!sessionId) throw new Error('Not authenticated');
 
       const result = await convex.mutation(api.recurringTransactions.create, {
+        sessionId: sessionId as any,
         title: recurring.title,
         amount: recurring.amount,
         type: recurring.type,
@@ -82,6 +83,7 @@ export function useRecurringTransactions() {
   const updateRecurring = useMutation({
     mutationFn: async ({ id, ...updates }: Partial<RecurringTransaction> & { id: string }) => {
       const result = await convex.mutation(api.recurringTransactions.update, {
+        sessionId: sessionId as any,
         id: id as any,
         title: updates.title,
         amount: updates.amount,
@@ -107,6 +109,7 @@ export function useRecurringTransactions() {
   const toggleActive = useMutation({
     mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
       const result = await convex.mutation(api.recurringTransactions.toggleActive, {
+        sessionId: sessionId as any,
         id: id as any,
         isActive: is_active,
       });
@@ -125,7 +128,7 @@ export function useRecurringTransactions() {
 
   const deleteRecurring = useMutation({
     mutationFn: async (id: string) => {
-      await convex.mutation(api.recurringTransactions.remove, { id: id as any });
+      await convex.mutation(api.recurringTransactions.remove, { sessionId: sessionId as any, id: id as any });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['recurring-transactions'] });
