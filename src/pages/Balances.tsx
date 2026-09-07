@@ -47,7 +47,7 @@ export default function Balances() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold">Full Balances</h1>
-            <p className="text-muted-foreground">All your financial figures — unabbreviated</p>
+            <p className="text-muted-foreground">All your financial figures — unabbreviated.</p>
           </div>
         </div>
 
