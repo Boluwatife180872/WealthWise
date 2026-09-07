@@ -150,16 +150,16 @@ export default function Analytics() {
         </div>
 
         {/* Summary Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl gradient-income flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-income-foreground" />
+                <div className="w-12 h-12 shrink-0 rounded-xl gradient-income flex items-center justify-center">
+                  <TrendingUp className="w-6 h-6 shrink-0 text-income-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Total Income</p>
-                  <p className="text-xl font-bold tabular-nums">{formatCurrency(totalIncome, currency)}</p>
+                  <p className="text-xl font-bold tabular-nums break-words">{formatCurrency(totalIncome, currency)}</p>
                   <p className="text-xs text-muted-foreground">Avg {formatCurrency(avgMonthlyIncome, currency)}/mo</p>
                 </div>
               </div>
@@ -168,12 +168,12 @@ export default function Analytics() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl gradient-expense flex items-center justify-center">
-                  <TrendingDown className="w-6 h-6 text-expense-foreground" />
+                <div className="w-12 h-12 shrink-0 rounded-xl gradient-expense flex items-center justify-center">
+                  <TrendingDown className="w-6 h-6 shrink-0 text-expense-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Total Expenses</p>
-                  <p className="text-xl font-bold tabular-nums">{formatCurrency(totalExpenses, currency)}</p>
+                  <p className="text-xl font-bold tabular-nums break-words">{formatCurrency(totalExpenses, currency)}</p>
                   <p className="text-xs text-muted-foreground">Avg {formatCurrency(avgMonthlyExpenses, currency)}/mo</p>
                 </div>
               </div>
@@ -182,12 +182,12 @@ export default function Analytics() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${netSavings >= 0 ? 'gradient-income' : 'gradient-expense'}`}>
-                  <Banknote className={`w-6 h-6 ${netSavings >= 0 ? 'text-income-foreground' : 'text-expense-foreground'}`} />
+                <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${netSavings >= 0 ? 'gradient-income' : 'gradient-expense'}`}>
+                  <Banknote className={`w-6 h-6 shrink-0 ${netSavings >= 0 ? 'text-income-foreground' : 'text-expense-foreground'}`} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Net Savings</p>
-                  <p className={`text-xl font-bold tabular-nums ${netSavings >= 0 ? 'text-income' : 'text-expense'}`}>
+                  <p className={`text-xl font-bold tabular-nums break-words ${netSavings >= 0 ? 'text-income' : 'text-expense'}`}>
                     {formatCurrency(netSavings, currency)}
                   </p>
                 </div>
@@ -197,12 +197,12 @@ export default function Analytics() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
-                  <PiggyBank className="w-6 h-6 text-primary-foreground" />
+                <div className="w-12 h-12 shrink-0 rounded-xl gradient-primary flex items-center justify-center">
+                  <PiggyBank className="w-6 h-6 shrink-0 text-primary-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Savings Rate</p>
-                  <p className="text-xl font-bold tabular-nums">{formatPercent(avgSavingsRate / 100)}</p>
+                  <p className="text-xl font-bold tabular-nums break-words">{formatPercent(avgSavingsRate / 100)}</p>
                 </div>
               </div>
             </CardContent>
@@ -362,15 +362,15 @@ export default function Analytics() {
                   const percentage = totalExpenses > 0 ? (cat.amount / totalExpenses) * 100 : 0;
                   return (
                     <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-3 min-w-0">
                           <div 
-                            className="w-3 h-3 rounded-full"
+                            className="w-3 h-3 shrink-0 rounded-full"
                             style={{ backgroundColor: cat.color }}
                           />
-                          <span className="font-medium">{cat.name}</span>
+                          <span className="font-medium truncate">{cat.name}</span>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right shrink-0">
                           <p className="font-medium tabular-nums">{formatCurrency(cat.amount, currency)}</p>
                           <p className="text-xs text-muted-foreground">{formatPercent(percentage / 100)}</p>
                         </div>

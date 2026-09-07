@@ -160,21 +160,21 @@ function Recurring() {
     return (
       <Card className={`glass-card border-l-4 ${isIncome ? 'border-l-income' : 'border-l-expense'} cursor-pointer transition-colors duration-200 hover:bg-accent/5`}>
         <CardContent className="pt-4">
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isIncome ? 'gradient-income' : 'gradient-expense'}`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3 min-w-0">
+              <div className={`w-10 h-10 shrink-0 rounded-lg flex items-center justify-center ${isIncome ? 'gradient-income' : 'gradient-expense'}`}>
                 {isIncome ? (
-                  <ArrowUpCircle className="w-5 h-5 text-income-foreground" />
+                  <ArrowUpCircle className="w-5 h-5 shrink-0 text-income-foreground" />
                 ) : (
-                  <ArrowDownCircle className="w-5 h-5 text-expense-foreground" />
+                  <ArrowDownCircle className="w-5 h-5 shrink-0 text-expense-foreground" />
                 )}
               </div>
-              <div>
-                <p className="font-medium">{recurring.title}</p>
-                <p className="text-sm text-muted-foreground">{recurring.category?.name || 'Uncategorized'}</p>
+              <div className="min-w-0">
+                <p className="font-medium truncate">{recurring.title}</p>
+                <p className="text-sm text-muted-foreground truncate">{recurring.category?.name || 'Uncategorized'}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <Switch
                 checked={recurring.is_active}
                 onCheckedChange={(checked) => toggleActive({ id: recurring.id, is_active: checked })}
@@ -188,17 +188,17 @@ function Recurring() {
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between">
-            <div>
-              <p className={`text-xl font-bold tabular-nums ${isIncome ? 'text-income' : 'text-expense'}`}>
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className={`text-xl font-bold tabular-nums break-words ${isIncome ? 'text-income' : 'text-expense'}`}>
                 {isIncome ? '+' : '-'}{formatCurrency(Number(recurring.amount), currency)}
               </p>
               <div className="flex items-center gap-2 mt-1">
-                <Clock className="w-3 h-3 text-muted-foreground" />
+                <Clock className="w-3 h-3 shrink-0 text-muted-foreground" />
                 <p className="text-xs text-muted-foreground capitalize">{recurring.frequency}</p>
               </div>
             </div>
-            <div className="text-right">
+            <div className="text-right shrink-0">
               <p className="text-sm text-muted-foreground">Next run</p>
               <p className="text-sm font-medium">{formatDate(new Date(recurring.next_run_date))}</p>
             </div>
@@ -332,12 +332,12 @@ function Recurring() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
+                <div className="w-12 h-12 shrink-0 rounded-xl gradient-primary flex items-center justify-center">
                   <RefreshCw className="w-6 h-6 text-primary-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Active Recurring</p>
-                  <p className="text-2xl font-bold">{activeRecurring.length}</p>
+                  <p className="text-2xl font-bold break-words">{activeRecurring.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -345,12 +345,12 @@ function Recurring() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl gradient-income flex items-center justify-center">
+                <div className="w-12 h-12 shrink-0 rounded-xl gradient-income flex items-center justify-center">
                   <ArrowUpCircle className="w-6 h-6 text-income-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Monthly Income</p>
-                  <p className="text-2xl font-bold tabular-nums text-income">{formatCurrency(monthlyIncome, currency)}</p>
+                  <p className="text-2xl font-bold tabular-nums text-income break-words">{formatCurrency(monthlyIncome, currency)}</p>
                 </div>
               </div>
             </CardContent>
@@ -358,12 +358,12 @@ function Recurring() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl gradient-expense flex items-center justify-center">
+                <div className="w-12 h-12 shrink-0 rounded-xl gradient-expense flex items-center justify-center">
                   <ArrowDownCircle className="w-6 h-6 text-expense-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Monthly Expenses</p>
-                  <p className="text-2xl font-bold tabular-nums text-expense">{formatCurrency(monthlyExpenses, currency)}</p>
+                  <p className="text-2xl font-bold tabular-nums text-expense break-words">{formatCurrency(monthlyExpenses, currency)}</p>
                 </div>
               </div>
             </CardContent>

@@ -205,12 +205,12 @@ export default function Goals() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
+                <div className="w-12 h-12 shrink-0 rounded-xl gradient-primary flex items-center justify-center">
                   <Target className="w-6 h-6 text-primary-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Total Goals</p>
-                  <p className="text-2xl font-bold">{savingsGoals.length}</p>
+                  <p className="text-2xl font-bold break-words">{savingsGoals.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -218,12 +218,12 @@ export default function Goals() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl gradient-income flex items-center justify-center">
+                <div className="w-12 h-12 shrink-0 rounded-xl gradient-income flex items-center justify-center">
                   <Banknote className="w-6 h-6 text-income-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Total Saved</p>
-                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalSaved, currency)}</p>
+                  <p className="text-2xl font-bold tabular-nums break-words">{formatCurrency(totalSaved, currency)}</p>
                 </div>
               </div>
             </CardContent>
@@ -231,12 +231,12 @@ export default function Goals() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center">
+                <div className="w-12 h-12 shrink-0 rounded-xl bg-secondary flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Overall Progress</p>
-                  <p className="text-2xl font-bold tabular-nums">{formatPercent(overallProgress / 100)}</p>
+                  <p className="text-2xl font-bold tabular-nums break-words">{formatPercent(overallProgress / 100)}</p>
                 </div>
               </div>
             </CardContent>
@@ -244,12 +244,12 @@ export default function Goals() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
+                <div className="w-12 h-12 shrink-0 rounded-xl gradient-primary flex items-center justify-center">
                   <Calendar className="w-6 h-6 text-primary-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Completed</p>
-                  <p className="text-2xl font-bold">{completedGoals} / {savingsGoals.length}</p>
+                  <p className="text-2xl font-bold break-words">{completedGoals} / {savingsGoals.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -310,16 +310,16 @@ export default function Goals() {
               return (
                 <Card key={goal.id} className={`glass-card ${isComplete ? 'border-income/50' : ''} cursor-pointer transition-colors duration-200 hover:bg-accent/5`}>
                   <CardHeader className="pb-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{goal.title}</CardTitle>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <CardTitle className="text-lg truncate">{goal.title}</CardTitle>
                         {goal.deadline && (
                           <p className="text-sm text-muted-foreground">
                             Deadline: {formatDate(new Date(goal.deadline))}
                           </p>
                         )}
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 shrink-0">
                         <Button 
                           variant="ghost" 
                           size="icon"

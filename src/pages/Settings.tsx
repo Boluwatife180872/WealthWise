@@ -316,10 +316,10 @@ export default function Settings() {
             <CardDescription>Customize the look and feel</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {isDarkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                <div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                {isDarkMode ? <Moon className="w-5 h-5 shrink-0" /> : <Sun className="w-5 h-5 shrink-0" />}
+                <div className="min-w-0">
                   <p className="font-medium">Dark Mode</p>
                   <p className="text-sm text-muted-foreground">Toggle between light and dark themes</p>
                 </div>
@@ -356,12 +356,12 @@ export default function Settings() {
             <CardDescription>Irreversible actions</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="min-w-0">
                 <p className="font-medium">Delete Account</p>
                 <p className="text-sm text-muted-foreground">Permanently delete your account and all data</p>
               </div>
-              <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+              <Button variant="destructive" onClick={() => setShowDeleteDialog(true)} className="shrink-0">
                 Delete Account
               </Button>
             </div>

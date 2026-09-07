@@ -135,7 +135,7 @@ export default function Budgets() {
             <h1 className="text-2xl font-bold">Budget Management</h1>
             <p className="text-muted-foreground">Track and manage your monthly budgets</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <Button variant="outline" size="icon" onClick={handlePrevMonth}>
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -208,12 +208,12 @@ export default function Budgets() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center">
+                <div className="w-12 h-12 shrink-0 rounded-xl gradient-primary flex items-center justify-center">
                   <PiggyBank className="w-6 h-6 text-primary-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Total Budget</p>
-                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalBudget, currency)}</p>
+                  <p className="text-2xl font-bold tabular-nums break-words">{formatCurrency(totalBudget, currency)}</p>
                 </div>
               </div>
             </CardContent>
@@ -221,12 +221,12 @@ export default function Budgets() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-xl gradient-expense flex items-center justify-center">
+                <div className="w-12 h-12 shrink-0 rounded-xl gradient-expense flex items-center justify-center">
                   <TrendingUp className="w-6 h-6 text-expense-foreground" />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Total Spent</p>
-                  <p className="text-2xl font-bold tabular-nums">{formatCurrency(totalSpent, currency)}</p>
+                  <p className="text-2xl font-bold tabular-nums break-words">{formatCurrency(totalSpent, currency)}</p>
                 </div>
               </div>
             </CardContent>
@@ -234,12 +234,12 @@ export default function Budgets() {
           <Card className="glass-card">
             <CardContent className="pt-6">
               <div className="flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${remainingBudget >= 0 ? 'gradient-income' : 'gradient-expense'}`}>
+                <div className={`w-12 h-12 shrink-0 rounded-xl flex items-center justify-center ${remainingBudget >= 0 ? 'gradient-income' : 'gradient-expense'}`}>
                   <AlertTriangle className={`w-6 h-6 ${remainingBudget >= 0 ? 'text-income-foreground' : 'text-expense-foreground'}`} />
                 </div>
-                <div>
+                <div className="min-w-0">
                   <p className="text-sm text-muted-foreground">Remaining</p>
-                  <p className={`text-2xl font-bold tabular-nums ${remainingBudget >= 0 ? 'text-income' : 'text-expense'}`}>
+                  <p className={`text-2xl font-bold tabular-nums break-words ${remainingBudget >= 0 ? 'text-income' : 'text-expense'}`}>
                     {formatCurrency(Math.abs(remainingBudget), currency)}
                   </p>
                 </div>
@@ -316,10 +316,10 @@ export default function Budgets() {
 
                   return (
                     <div key={budget.id} className="p-4 rounded-xl bg-secondary/50 border border-border/60 cursor-pointer transition-colors duration-200 hover:bg-accent/5">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3 min-w-0">
                           <div 
-                            className="w-10 h-10 rounded-lg flex items-center justify-center"
+                            className="w-10 h-10 shrink-0 rounded-lg flex items-center justify-center"
                             style={{ backgroundColor: budget.category?.color + '20' }}
                           >
                             <div 
@@ -327,14 +327,14 @@ export default function Budgets() {
                               style={{ backgroundColor: budget.category?.color }}
                             />
                           </div>
-                          <div>
-                            <p className="font-medium">{budget.category?.name}</p>
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{budget.category?.name}</p>
                             <p className="text-sm text-muted-foreground">
                               {formatCurrency(budget.spent || 0, currency)} of {formatCurrency(Number(budget.amount), currency)}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+<div className="flex flex-wrap items-center gap-2">
                           {isOverBudget && (
                             <span className="px-2 py-1 text-xs rounded-full bg-expense/20 text-expense">
                               Over budget

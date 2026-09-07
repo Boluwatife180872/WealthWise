@@ -67,10 +67,10 @@ export default function Balances() {
             {items.map((item) => (
               <Card key={item.label} className={cn('glass-card', item.negative && 'ring-2 ring-red-500/40 animate-pulse')}>
                 <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
+<div className="flex items-center justify-between">
                     <p className="text-sm text-muted-foreground">{item.label}</p>
-                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <item.icon className={cn('w-5 h-5', item.color)} />
+                    <div className="w-10 h-10 shrink-0 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <item.icon className={cn('w-5 h-5 shrink-0', item.color)} />
                     </div>
                   </div>
                   <p className={cn('text-2xl font-bold mt-2 tabular-nums break-words', item.color)}>

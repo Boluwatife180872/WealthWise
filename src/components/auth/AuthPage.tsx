@@ -198,7 +198,7 @@ function AuthForm() {
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {GOOGLE_CLIENT_ID ? (
             <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
               <div className="w-full [&>div]:w-full [&>div>div]:w-full [&>div>div>iframe]:w-full">

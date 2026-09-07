@@ -67,19 +67,19 @@ function DashboardLayoutComponent({ children }: { children: ReactNode }) {
 
       {/* Sidebar */}
       <aside className={cn(
-        "fixed top-0 left-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border transition-transform duration-300",
+        "fixed top-0 left-0 z-40 h-dvh w-64 bg-sidebar border-r border-sidebar-border transition-transform duration-300 overflow-hidden",
         "xl:translate-x-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full">
-          <div className="h-16 flex items-center gap-3 px-6 border-b border-sidebar-border">
-            <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
-              <Wallet className="w-5 h-5 text-primary-foreground" />
+          <div className="h-16 shrink-0 flex items-center gap-3 px-6 border-b border-sidebar-border">
+            <div className="w-10 h-10 shrink-0 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
+              <Wallet className="w-5 h-5 shrink-0 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold">WealthWise</span>
           </div>
 
-          <nav className="flex-1 p-4 space-y-1">
+          <nav className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto">
             {navItems.map(item => (
               <Link
                 key={item.path}
@@ -92,21 +92,21 @@ function DashboardLayoutComponent({ children }: { children: ReactNode }) {
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                 )}
               >
-                <item.icon className="w-5 h-5" />
+                <item.icon className="w-5 h-5 shrink-0" />
                 {item.label}
               </Link>
             ))}
           </nav>
 
-          <div className="p-4 border-t border-sidebar-border">
+          <div className="p-4 shrink-0 border-t border-sidebar-border">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-sidebar-accent/50 transition-colors">
-                  <Avatar key={profile?.avatar_url || 'no-avatar'} className="w-9 h-9">
+                <button className="w-full min-w-0 flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-sidebar-accent/50 transition-colors">
+                  <Avatar key={profile?.avatar_url || 'no-avatar'} className="w-9 h-9 shrink-0">
                     <AvatarImage src={profile?.avatar_url || undefined} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-sm">{initials}</AvatarFallback>
                   </Avatar>
-                  <div className="flex-1 text-left">
+                  <div className="flex-1 min-w-0 text-left overflow-hidden">
                     <p className="text-sm font-medium truncate">{profile?.full_name || 'User'}</p>
                     <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
@@ -130,7 +130,7 @@ function DashboardLayoutComponent({ children }: { children: ReactNode }) {
 
       {/* Backdrop */}
       {sidebarOpen && (
-        <div className="lg:hidden fixed inset-0 z-30 bg-background/80 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
+        <div className="xl:hidden fixed inset-0 z-30 bg-background/80 backdrop-blur-sm" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Main content */}

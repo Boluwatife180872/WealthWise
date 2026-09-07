@@ -10,7 +10,6 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
-*.local
 
 # Editor directories and files
 .vscode/*
@@ -23,6 +22,24 @@ dist-ssr
 *.sln
 *.sw?
 
+# Environment variables
+.env
+.env.*
+!.env.example
+!.env.local
+
 # Convex auto-generated files (committed for Vercel deployment)
 # convex/_generated/
-.env.local
+
+# Sensitive files
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+credentials.json
+serviceAccountKey.json
+secrets.*
+.htpasswd
+.npmrc
+*.log

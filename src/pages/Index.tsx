@@ -90,14 +90,14 @@ function LandingPage() {
       <div className="pointer-events-none absolute right-[-6rem] top-12 h-80 w-80 rounded-full bg-sky-500/10 blur-3xl" />
 
       <div className="relative mx-auto flex min-h-screen max-w-7xl flex-col px-4 py-6 sm:px-6 lg:px-8">
-        <header className="mb-12 flex items-center justify-between">
+        <header className="mb-12 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl gradient-primary shadow-glow">
-              <Wallet className="h-5 w-5 text-primary-foreground" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl gradient-primary shadow-glow">
+              <Wallet className="h-5 w-5 shrink-0 text-primary-foreground" />
             </div>
             <div>
               <p className="text-lg font-bold">WealthWise</p>
-              <p className="text-sm text-muted-foreground">
+              <p className="hidden text-sm text-muted-foreground sm:block">
                 Financial freedom for Nigerians
               </p>
             </div>
@@ -174,7 +174,7 @@ function LandingPage() {
                     key={point}
                     className="flex items-center gap-2 rounded-2xl border border-border/50 bg-card/60 px-4 py-3 text-sm text-muted-foreground backdrop-blur-xl"
                   >
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
                     <span>{point}</span>
                   </div>
                 ))}
@@ -185,33 +185,33 @@ function LandingPage() {
               <Card className="glass-card overflow-hidden rounded-[2rem] border-border/50">
                 <CardContent className="p-0">
                   <div className="border-b border-border/50 px-6 py-5">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-sm text-muted-foreground">
                           Financial overview
                         </p>
-                        <h2 className="mt-1 text-2xl font-bold">₦1,248,050.00</h2>
+                        <h2 className="mt-1 text-2xl font-bold break-words">₦1,248,050.00</h2>
                       </div>
-                      <div className="rounded-2xl bg-primary/15 p-3 text-primary">
-                        <CreditCard className="h-5 w-5" />
+                      <div className="rounded-2xl bg-primary/15 p-3 text-primary shrink-0">
+                        <CreditCard className="h-5 w-5 shrink-0" />
                       </div>
                     </div>
                     <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                      <div className="rounded-2xl bg-secondary/70 p-3">
+                      <div className="min-w-0 rounded-2xl bg-secondary/70 p-3">
                         <p className="text-muted-foreground">Income</p>
-                        <p className="mt-1 font-semibold text-primary">
+                        <p className="mt-1 font-semibold text-primary break-words">
                           +₦620,000
                         </p>
                       </div>
-                      <div className="rounded-2xl bg-secondary/70 p-3">
+                      <div className="min-w-0 rounded-2xl bg-secondary/70 p-3">
                         <p className="text-muted-foreground">Spent</p>
-                        <p className="mt-1 font-semibold text-destructive">
+                        <p className="mt-1 font-semibold text-destructive break-words">
                           -₦214,000
                         </p>
                       </div>
-                      <div className="rounded-2xl bg-secondary/70 p-3">
+                      <div className="min-w-0 rounded-2xl bg-secondary/70 p-3">
                         <p className="text-muted-foreground">Saved</p>
-                        <p className="mt-1 font-semibold">₦186,000</p>
+                        <p className="mt-1 font-semibold break-words">₦186,000</p>
                       </div>
                     </div>
                   </div>
@@ -241,10 +241,10 @@ function LandingPage() {
                             key={title}
                             className="flex gap-4 rounded-3xl border border-border/50 bg-background/40 p-4"
                           >
-                            <div className="mt-1 rounded-2xl bg-primary/15 p-2 text-primary">
-                              <Icon className="h-4 w-4" />
+                            <div className="mt-1 shrink-0 rounded-2xl bg-primary/15 p-2 text-primary">
+                              <Icon className="h-4 w-4 shrink-0" />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                               <h3 className="font-semibold">{title}</h3>
                               <p className="mt-1 text-sm leading-6 text-muted-foreground">
                                 {description}
@@ -297,8 +297,8 @@ function LandingPage() {
                 },
               ].map(({ step, icon: Icon, title, desc }) => (
                 <Card key={step} className="glass-card text-center p-6 relative overflow-hidden">
-                  <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 shadow-glow">
-                    <Icon className="w-7 h-7 text-primary-foreground" />
+                  <div className="w-14 h-14 shrink-0 rounded-2xl gradient-primary flex items-center justify-center mx-auto mb-4 shadow-glow">
+                    <Icon className="w-7 h-7 shrink-0 text-primary-foreground" />
                   </div>
                   <span className="text-xs font-bold text-primary tracking-widest">STEP {step}</span>
                   <h3 className="text-xl font-bold mt-2">{title}</h3>
@@ -348,10 +348,10 @@ function LandingPage() {
               ].map(({ icon: Icon, title, desc }) => (
                 <Card key={title} className="glass-card p-5">
                   <div className="flex gap-4">
-                    <div className="w-11 h-11 rounded-xl gradient-primary flex items-center justify-center shrink-0 shadow-glow">
-                      <Icon className="w-5 h-5 text-primary-foreground" />
+                    <div className="w-11 h-11 shrink-0 rounded-xl gradient-primary flex items-center justify-center shadow-glow">
+                      <Icon className="w-5 h-5 shrink-0 text-primary-foreground" />
                     </div>
-                    <div>
+                    <div className="min-w-0">
                       <h3 className="font-semibold">{title}</h3>
                       <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{desc}</p>
                     </div>
